@@ -25,15 +25,17 @@
 }
 
 .title-pokeball {
-  width: 36px;
-  height: 36px;
+  width: 52px !important;
+  height: 52px !important;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+  object-fit: contain;
+  display: block;
   animation: pokeBounce 1.8s ease-in-out infinite;
 }
 .title-pokeball--mid {
-  width: 44px;
-  height: 44px;
+  width: 64px !important;
+  height: 64px !important;
   animation-delay: 0.3s;
 }
 
