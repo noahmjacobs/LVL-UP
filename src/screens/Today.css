@@ -1,0 +1,78 @@
+.today-screen {
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.today-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.today-day {
+  font-size: 28px;
+  color: var(--green);
+  margin-top: 6px;
+  line-height: 1.2;
+}
+
+.today-sprite-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+}
+
+.today-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.today-progress__bar {
+  flex: 1;
+  height: 6px;
+  background: #222;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.today-progress__fill {
+  height: 100%;
+  background: var(--green);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.today-locked-banner {
+  text-align: center;
+  padding: 12px;
+}
+
+.today-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.today-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 4px;
+  padding-bottom: 8px;
+}
+
+.today-warning {
+  font-size: 8px;
+  color: var(--red);
+  text-align: center;
+  line-height: 1.8;
+}
+
+.today-lockin {
+  font-size: 10px;
+  padding: 16px;
+}

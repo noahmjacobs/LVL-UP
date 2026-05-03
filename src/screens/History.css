@@ -1,0 +1,71 @@
+.history-screen { padding: 20px 16px; display: flex; flex-direction: column; gap: 16px; }
+.history-header  { text-align: center; }
+
+.history-legend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--gray);
+  justify-content: center;
+  font-family: var(--font-ui);
+}
+.legend-dot {
+  width: 10px; height: 10px;
+  border-radius: 2px;
+  display: inline-block;
+}
+.legend-dot--green { background: var(--green-dim); border: 1px solid var(--green); }
+.legend-dot--red   { background: #4a0000; border: 1px solid var(--red); }
+.legend-dot--gray  { background: #222; border: 1px solid #444; }
+
+.history-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 4px;
+}
+
+.cal-tile {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  cursor: default;
+  transition: transform 0.1s;
+}
+.cal-tile--done   { background: var(--green-dim); border: 1px solid var(--green); cursor: pointer; }
+.cal-tile--fail   { background: #2a0000; border: 1px solid var(--red); cursor: pointer; }
+.cal-tile--future { background: #1a1a1a; border: 1px solid #333; }
+.cal-tile--active { transform: scale(1.1); }
+.cal-tile:hover.cal-tile--done, .cal-tile:hover.cal-tile--fail { transform: scale(1.05); }
+
+.cal-num { font-size: 6px; color: #aaa; }
+.cal-tile--done .cal-num   { color: var(--green); }
+.cal-tile--fail .cal-num   { color: var(--red); }
+
+.history-detail { display: flex; flex-direction: column; gap: 10px; }
+
+.history-detail__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.history-badge {
+  font-size: 8px;
+  padding: 4px 8px;
+  border-radius: 2px;
+}
+.history-badge--pass { color: var(--green); border: 1px solid var(--green); }
+.history-badge--fail { color: var(--red);   border: 1px solid var(--red); }
+
+.history-task-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-family: var(--font-ui);
+}

@@ -1,0 +1,12 @@
+.poke-sprite {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  object-fit: contain;
+  display: block;
+}
+
+.poke-sprite--xs  { width: 48px;  height: 48px; }
+.poke-sprite--sm  { width: 72px;  height: 72px; }
+.poke-sprite--md  { width: 96px;  height: 96px; }
+.poke-sprite--lg  { width: 140px; height: 140px; }
+.poke-sprite--xl  { width: 200px; height: 200px; }

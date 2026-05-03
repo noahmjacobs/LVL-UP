@@ -1,0 +1,10 @@
+.radar-wrap {
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+}
+.radar-svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}

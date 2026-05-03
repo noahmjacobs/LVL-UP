@@ -1,0 +1,47 @@
+.restart-screen {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: radial-gradient(ellipse at center, #1a0000 0%, var(--bg) 70%);
+}
+
+.restart-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  text-align: center;
+}
+
+.restart-label { font-size: 13px; letter-spacing: 2px; }
+
+.restart-sprite {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+@keyframes droop {
+  0%, 100% { transform: rotate(0deg) translateY(0); }
+  50%       { transform: rotate(-5deg) translateY(4px); }
+}
+
+.restart-droop { animation: droop 2s ease-in-out infinite; filter: grayscale(0.4); }
+
+.restart-bubble {
+  font-size: 16px;
+  color: var(--gray);
+  margin-top: 8px;
+  letter-spacing: 4px;
+}
+
+.restart-text { width: 100%; }
+
+.restart-btn {
+  font-size: 10px;
+  padding: 16px;
+}

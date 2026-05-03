@@ -1,0 +1,43 @@
+.evo-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.95);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.evo-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 40px 24px;
+  text-align: center;
+}
+
+.evo-text {
+  font-size: 13px;
+  color: var(--white);
+  line-height: 1.8;
+}
+
+.evo-sprites {
+  width: 200px;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.evo-name {
+  font-size: 14px;
+  letter-spacing: 2px;
+}
+
+.evo-btn {
+  font-size: 10px;
+  padding: 14px 32px;
+  margin-top: 8px;
+}
