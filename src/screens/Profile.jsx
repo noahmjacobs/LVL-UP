@@ -7,7 +7,7 @@ export default function Profile() {
   const {
     trainerName, pokemonChoice, pokemonNickname, setPokemonNickname,
     currentDay, currentStreak, totalCompletedDays, totalRestarts,
-    longestStreak, stats, getCurrentPokemon, evolutionStage,
+    longestStreak, stats, getCurrentPokemon, evolutionStage, logout,
   } = useGameStore();
 
   const [editing, setEditing] = useState(false);
@@ -86,6 +86,10 @@ export default function Profile() {
           "It does not matter how slowly you go,<br />as long as you do not stop."
         </p>
       </div>
+
+      <button className="btn btn--red btn--full pixel" style={{ fontSize: 8 }} onClick={logout}>
+        SIGN OUT
+      </button>
     </div>
   );
 }

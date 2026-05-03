@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import useGameStore from './store/useGameStore';
+import { auth, onAuthStateChanged } from './firebase';
 
+import TitleScreen      from './screens/TitleScreen';
 import ProfessorIntro   from './screens/ProfessorIntro';
 import NameEntry        from './screens/NameEntry';
 import StarterSelect    from './screens/StarterSelect';
@@ -15,11 +17,24 @@ import EvolutionCutscene from './components/EvolutionCutscene';
 const ONBOARDING = ['professor', 'nameEntry', 'starterSelect'];
 
 export default function App() {
-  const { currentScreen, isOnboarded, loadSavedUser, showEvolutionCutscene } = useGameStore();
+  const { currentScreen, authLoading, handleAuthResolved, showEvolutionCutscene } = useGameStore();
 
   useEffect(() => {
-    loadSavedUser();
+    const unsub = onAuthStateChanged(auth, (user) => {
+      handleAuthResolved(user);
+    });
+    return unsub;
   }, []);
+
+  if (authLoading) {
+    return (
+      <div className="app-shell" style={{ alignItems: 'center', justifyContent: 'center' }}>
+        <p className="pixel" style={{ fontSize: 10, color: 'var(--green)' }}>
+          LOADING<span className="blink">...</span>
+        </p>
+      </div>
+    );
+  }
 
   const inOnboarding = ONBOARDING.includes(currentScreen);
 
@@ -27,12 +42,13 @@ export default function App() {
     <div className="app-shell">
       <div className="scanlines" />
 
+      {currentScreen === 'title'        && <TitleScreen />}
       {currentScreen === 'professor'    && <ProfessorIntro />}
       {currentScreen === 'nameEntry'    && <NameEntry />}
       {currentScreen === 'starterSelect' && <StarterSelect />}
-      {currentScreen === 'restart'       && <RestartScreen />}
+      {currentScreen === 'restart'      && <RestartScreen />}
 
-      {!inOnboarding && currentScreen !== 'restart' && (
+      {!inOnboarding && currentScreen !== 'restart' && currentScreen !== 'title' && (
         <>
           <div className="screen">
             {currentScreen === 'today'   && <Today />}
