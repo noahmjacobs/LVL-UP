@@ -23,9 +23,9 @@ export default function TitleScreen() {
     <div className="title-screen">
       <div className="title-logo-wrap">
         <div className="title-pokeballs">
-          <span className="title-pokeball">⚫</span>
-          <span className="title-pokeball title-pokeball--mid">🔴</span>
-          <span className="title-pokeball">⚫</span>
+          <img src="/sprites/greatball.png" className="title-pokeball" alt="great ball" />
+          <img src="/sprites/pokeball.png"  className="title-pokeball title-pokeball--mid" alt="poke ball" />
+          <img src="/sprites/ultraball.png" className="title-pokeball" alt="ultra ball" />
         </div>
         <h1 className="pixel title-logo">LVL<br />UP</h1>
         <p className="pixel title-sub">75 TUFF CHALLENGE</p>

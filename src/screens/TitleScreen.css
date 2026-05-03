@@ -25,12 +25,16 @@
 }
 
 .title-pokeball {
-  font-size: 28px;
+  width: 36px;
+  height: 36px;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
   animation: pokeBounce 1.8s ease-in-out infinite;
 }
 .title-pokeball--mid {
+  width: 44px;
+  height: 44px;
   animation-delay: 0.3s;
-  font-size: 36px;
 }
 
 .title-logo {
