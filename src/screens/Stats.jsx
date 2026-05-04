@@ -1,6 +1,7 @@
-import useGameStore from '../store/useGameStore';
+import useGameStore, { EVOLUTION_LINES } from '../store/useGameStore';
 import RadarChart from '../components/RadarChart';
 import PokemonSprite from '../components/PokemonSprite';
+import { getPokemonTypeColor } from '../constants/themes';
 import './Stats.css';
 
 const STAT_INFO = [
@@ -13,36 +14,31 @@ const STAT_INFO = [
 ];
 
 export default function Stats() {
-  const { stats, currentDay, getCurrentPokemon, pokemonNickname, pokemonChoice, evolutionStage } = useGameStore();
+  const { stats, getCurrentPokemon, pokemonNickname, pokemonChoice, partnerLine, caughtLines } = useGameStore();
   const pokemon = getCurrentPokemon();
-  const nickname = pokemonNickname || pokemonChoice;
-  const progressPct = Math.round(((currentDay - 1) / 75) * 100);
+
+  // Always use the displayed Pokémon's choice key for color and nickname
+  const displayChoice = partnerLine || pokemonChoice;
+  const typeColor = getPokemonTypeColor(displayChoice);
+
+  // When a partner is displayed, show their form name; otherwise show the custom nickname
+  const nickname = partnerLine !== null && caughtLines[partnerLine] !== undefined
+    ? EVOLUTION_LINES[partnerLine]?.[caughtLines[partnerLine]] || partnerLine
+    : (pokemonNickname || pokemonChoice);
 
   return (
     <div className="stats-screen">
-      <div className="stats-header">
-        <div>
-          <p className="pixel" style={{ fontSize: 8, color: 'var(--gray)' }}>STATS OVERVIEW</p>
-          <p className="day-badge" style={{ marginTop: 6 }}>DAY {currentDay - 1} / 75</p>
+      {pokemon && (
+        <div className="stats-sprite-wrap">
+          <PokemonSprite name={pokemon} size="lg" bounce />
+          <p className="pixel" style={{ fontSize: 7, color: 'var(--yellow)', textAlign: 'center', marginTop: 6 }}>
+            {nickname?.toUpperCase()}
+          </p>
         </div>
-        {pokemon && (
-          <div className="stats-sprite-wrap">
-            <PokemonSprite name={pokemon} size="md" glow bounce />
-            <p className="pixel" style={{ fontSize: 7, color: 'var(--yellow)', textAlign: 'center', marginTop: 4 }}>
-              {nickname?.toUpperCase()}
-            </p>
-          </div>
-        )}
-      </div>
+      )}
 
-      {/* Challenge progress bar */}
-      <div className="stats-challenge-bar">
-        <div className="stats-challenge-bar__fill" style={{ width: `${progressPct}%` }} />
-        <span className="stats-challenge-label pixel">{progressPct}% COMPLETE</span>
-      </div>
-
-      {/* Radar chart */}
-      <RadarChart stats={stats} />
+      {/* Radar chart — colored by Pokémon type */}
+      <RadarChart stats={stats} typeColor={typeColor} />
 
       {/* Stat breakdown */}
       <div className="stats-list">
@@ -52,12 +48,12 @@ export default function Stats() {
             <div key={key} className="stat-row card">
               <div className="stat-row__top">
                 <span className="pixel stat-row__label">{label}</span>
-                <span className="pixel stat-row__val" style={{ color: 'var(--green)' }}>
+                <span className="pixel stat-row__val" style={{ color: typeColor }}>
                   {Math.round(val)}<span style={{ fontSize: 7, color: 'var(--gray)' }}>/252</span>
                 </span>
               </div>
               <div className="stat-bar" style={{ marginTop: 8 }}>
-                <div className="stat-bar__fill" style={{ width: `${(val / 252) * 100}%` }} />
+                <div className="stat-bar__fill" style={{ width: `${(val / 252) * 100}%`, background: typeColor }} />
               </div>
               <p className="stat-row__desc">{desc}</p>
             </div>

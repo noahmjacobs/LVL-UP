@@ -12,6 +12,7 @@ import Stats            from './screens/Stats';
 import History          from './screens/History';
 import Profile          from './screens/Profile';
 import RestartScreen    from './screens/RestartScreen';
+import ChooseNewPokemon from './screens/ChooseNewPokemon';
 import NavBar           from './components/NavBar';
 import EvolutionCutscene from './components/EvolutionCutscene';
 
@@ -49,9 +50,14 @@ export default function App() {
       {currentScreen === 'professor'    && <ProfessorIntro />}
       {currentScreen === 'nameEntry'    && <NameEntry />}
       {currentScreen === 'starterSelect' && <StarterSelect />}
-      {currentScreen === 'restart'      && <RestartScreen />}
+      {currentScreen === 'restart'           && <RestartScreen />}
+      {currentScreen === 'chooseNewPokemon'  && (
+        <div className="screen">
+          <ChooseNewPokemon />
+        </div>
+      )}
 
-      {!inOnboarding && currentScreen !== 'restart' && currentScreen !== 'title' && (
+      {!inOnboarding && currentScreen !== 'restart' && currentScreen !== 'title' && currentScreen !== 'chooseNewPokemon' && (
         <>
           <div className={`screen${currentScreen === 'today' ? ' screen--immersive' : ''}`}>
             {currentScreen === 'today'   && <Today />}

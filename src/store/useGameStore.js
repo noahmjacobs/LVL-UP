@@ -6,7 +6,7 @@ import {
 import { applyTheme, DEFAULT_THEME } from '../constants/themes';
 
 const STAT_MAX       = 252;
-const STAT_INCREMENT = STAT_MAX / 75; // 3.36 per completed day — hits 252 at day 75
+const STAT_INCREMENT = 5;
 
 const EVOLUTION_LINES = {
   charmander: ['charmander', 'charmeleon', 'charizard'],
@@ -50,32 +50,67 @@ const defaultStats = () => ({
 
 const todayDate = () => new Date().toISOString().split('T')[0];
 
-const computeStatsFromHistory = (history) => {
+const DEFAULT_HABIT_COLORS = {
+  diet:     '#FF8C00',
+  workout1: '#39FF14',
+  workout2: '#00E5FF',
+  read:     '#FFD700',
+  photo:    '#BB44FF',
+  water:    '#4488FF',
+};
+
+// ── New helpers ────────────────────────────────────────────────────────────────
+const computeAvgStats = (stats) =>
+  Object.values(stats).reduce((s, v) => s + v, 0) / Object.keys(stats).length;
+
+const computeEvolutionStageFromStats = (stats) => {
+  const avg = computeAvgStats(stats);
+  if (avg >= 100) return 2;
+  if (avg >= 50)  return 1;
+  return 0;
+};
+
+// A streak day = all tasks are true or 'rest' (not false/missing)
+const isStreakDay = (entry) => {
+  if (!entry?.tasks) return false;
+  return Object.values(entry.tasks).every(v => v === true || v === 'rest');
+};
+
+// startDate (YYYY-MM-DD): when provided, only count entries on/after that date.
+// This resets stats to 0 when a new Pokémon is chosen.
+const computeStatsFromHistory = (history, startDate = null) => {
   const stats = defaultStats();
   for (const h of history) {
     if (!h.tasks) continue;
-    if (h.tasks.diet)     stats.discipline  = Math.min(STAT_MAX,stats.discipline  + STAT_INCREMENT);
-    if (h.tasks.read)     stats.focus       = Math.min(STAT_MAX,stats.focus       + STAT_INCREMENT);
-    if (h.tasks.workout1 && h.tasks.workout2)
-                          stats.energy      = Math.min(STAT_MAX,stats.energy      + STAT_INCREMENT);
-    if (h.tasks.water)    stats.health      = Math.min(STAT_MAX,stats.health      + STAT_INCREMENT);
-    if (h.tasks.photo)    stats.habits      = Math.min(STAT_MAX,stats.habits      + STAT_INCREMENT);
-    if (Object.values(h.tasks).every(Boolean))
-                          stats.consistency = Math.min(STAT_MAX,stats.consistency + STAT_INCREMENT);
+    if (startDate && h.date < startDate) continue;
+    if (h.tasks.diet === true)     stats.discipline  = Math.min(STAT_MAX, stats.discipline  + STAT_INCREMENT);
+    if (h.tasks.read === true)     stats.focus       = Math.min(STAT_MAX, stats.focus       + STAT_INCREMENT);
+    if (h.tasks.workout1 === true && h.tasks.workout2 === true)
+                                   stats.energy      = Math.min(STAT_MAX, stats.energy      + STAT_INCREMENT);
+    if (h.tasks.water === true)    stats.health      = Math.min(STAT_MAX, stats.health      + STAT_INCREMENT);
+    if (h.tasks.photo === true)    stats.habits      = Math.min(STAT_MAX, stats.habits      + STAT_INCREMENT);
+    if (Object.values(h.tasks).every(v => v === true))
+                                   stats.consistency = Math.min(STAT_MAX, stats.consistency + STAT_INCREMENT);
   }
   return stats;
 };
 
 const computeStreak = (history) => {
-  const completedSet = new Set(history.filter(h => h.completed).map(h => h.date));
+  const streakSet = new Set(history.filter(h => isStreakDay(h)).map(h => h.date));
   let streak = 0;
   const d = new Date(todayDate() + 'T12:00:00');
   while (true) {
     const str = d.toISOString().split('T')[0];
-    if (completedSet.has(str)) { streak++; d.setDate(d.getDate() - 1); }
+    if (streakSet.has(str)) { streak++; d.setDate(d.getDate() - 1); }
     else break;
   }
   return streak;
+};
+
+// Returns true if the nickname is still a default (matches any name in the evolution line)
+const isDefaultNickname = (nickname, pokemonChoice) => {
+  const line = EVOLUTION_LINES[pokemonChoice] || [];
+  return line.map(n => n.toLowerCase()).includes((nickname || '').toLowerCase());
 };
 
 const useGameStore = create((set, get) => ({
@@ -109,21 +144,40 @@ const useGameStore = create((set, get) => ({
   stats: defaultStats(),
 
   // ── Theme ────────────────────────────────────────────────────────────────
-  themeColor: DEFAULT_THEME,
+  themeColor:   DEFAULT_THEME,
+  habitColors:  { ...DEFAULT_HABIT_COLORS },
 
   // ── Pokémon ──────────────────────────────────────────────────────────────
   evolutionStage:        0,
   showEvolutionCutscene: false,
   evolutionTarget:       null,
+  // caughtLines: { [pokemonChoice]: highestStage } — one entry per LINE, not per form
+  caughtLines:           {},
+  partnerLine:           null,   // null = show current active line, or a choice key e.g. 'squirtle'
+  partnerSince:          null,   // YYYY-MM-DD when current pokemonChoice was adopted; stats only count from here
+  shinyUnlocked:         false,  // true when avg ≥ 150 at final evo
+  showShiny:             false,  // user toggle
+  canChooseNewPokemon:   false,  // true when evolutionStage === 2
 
   // ── History ──────────────────────────────────────────────────────────────
   history: [],
 
   // ── Computed ─────────────────────────────────────────────────────────────
   getCurrentPokemon() {
-    const { pokemonChoice, evolutionStage } = get();
-    if (!pokemonChoice) return null;
-    return EVOLUTION_LINES[pokemonChoice][evolutionStage];
+    const { pokemonChoice, evolutionStage, partnerLine, caughtLines, showShiny, shinyUnlocked } = get();
+    let choice, stage;
+    if (partnerLine !== null && caughtLines[partnerLine] !== undefined) {
+      choice = partnerLine;
+      stage  = caughtLines[partnerLine];
+    } else {
+      choice = pokemonChoice;
+      stage  = evolutionStage;
+    }
+    if (!choice) return null;
+    const baseName = EVOLUTION_LINES[choice]?.[stage];
+    if (!baseName) return null;
+    if (showShiny && shinyUnlocked) return `shiny${baseName}`;
+    return baseName;
   },
 
   getEvolutionLines: () => EVOLUTION_LINES,
@@ -161,11 +215,21 @@ const useGameStore = create((set, get) => ({
       uid: null, isOnboarded: false, trainerName: '',
       pokemonChoice: null, pokemonNickname: '',
       currentScreen: 'title', themeColor: DEFAULT_THEME,
+      habitColors: { ...DEFAULT_HABIT_COLORS },
       currentDay: 1, currentStreak: 1, totalCompletedDays: 0,
       totalRestarts: 0, longestStreak: 0, lastLockDate: null,
       todayTasks: defaultTasks(), waterOz: 0, isLockedIn: false,
       stats: defaultStats(), evolutionStage: 0, history: [],
+      caughtLines: {}, partnerLine: null, partnerSince: null,
+      shinyUnlocked: false, showShiny: false, canChooseNewPokemon: false,
     });
+  },
+
+  setHabitColor: async (habitKey, color) => {
+    const { uid, habitColors } = get();
+    const newColors = { ...habitColors, [habitKey]: color };
+    set({ habitColors: newColors });
+    if (uid) await updateProfileField(uid, 'habitColors', newColors);
   },
 
   setThemeColor: async (id) => {
@@ -178,12 +242,17 @@ const useGameStore = create((set, get) => ({
   // ── Onboarding actions ────────────────────────────────────────────────────
   setTrainerName:    (name)   => set({ trainerName: name }),
   setPokemonChoice:  (choice) => set({ pokemonChoice: choice }),
-  setPokemonNickname:(name)   => set({ pokemonNickname: name }),
+  setPokemonNickname: async (name) => {
+    const { uid } = get();
+    set({ pokemonNickname: name });
+    if (uid) await updateProfileField(uid, 'pokemonNickname', name);
+  },
   goToScreen:        (screen) => set({ currentScreen: screen }),
 
   completeOnboarding: async () => {
     const s = get();
-    set({ isOnboarded: true, currentScreen: 'today' });
+    const initialLines = { [s.pokemonChoice]: 0 };
+    set({ isOnboarded: true, currentScreen: 'today', caughtLines: initialLines });
     await saveProfile(s.uid, {
       trainerName:        s.trainerName,
       pokemonChoice:      s.pokemonChoice,
@@ -191,6 +260,7 @@ const useGameStore = create((set, get) => ({
       totalCompletedDays: 0,
       totalRestarts:      0,
       longestStreak:      0,
+      caughtLines:        initialLines,
     });
     await saveChallenge(s.uid, {
       currentDay: 1, currentStreak: 1,
@@ -214,19 +284,30 @@ const useGameStore = create((set, get) => ({
       ? Object.entries(history).map(([date, v]) => ({ date, ...v }))
       : [];
 
-    const recomputedStats  = computeStatsFromHistory(historyArr);
+    const partnerSince     = profile.partnerSince || null;
+    const recomputedStats  = computeStatsFromHistory(historyArr, partnerSince);
     const totalCompleted   = historyArr.filter(h => h.completed).length;
     const recomputedStreak = computeStreak(historyArr);
 
     const savedTheme = profile.themeColor || DEFAULT_THEME;
     applyTheme(savedTheme);
 
+    // Sync nickname to current evolution stage if user never customized it
+    const computedEvStage = Math.max(
+      challenge.evolutionStage || 0,
+      computeEvolutionStageFromStats(recomputedStats)
+    );
+    const resolvedNickname = isDefaultNickname(profile.pokemonNickname, profile.pokemonChoice)
+      ? (EVOLUTION_LINES[profile.pokemonChoice]?.[computedEvStage] || profile.pokemonNickname)
+      : profile.pokemonNickname;
+
     set({
       isOnboarded:        true,
       trainerName:        profile.trainerName,
       pokemonChoice:      profile.pokemonChoice,
-      pokemonNickname:    profile.pokemonNickname,
+      pokemonNickname:    resolvedNickname,
       themeColor:         savedTheme,
+      habitColors:        { ...DEFAULT_HABIT_COLORS, ...(profile.habitColors || {}) },
       totalCompletedDays: totalCompleted,
       totalRestarts:      profile.totalRestarts || 0,
       longestStreak:      Math.max(profile.longestStreak || 0, recomputedStreak),
@@ -236,11 +317,39 @@ const useGameStore = create((set, get) => ({
       waterOz:            0,
       todayTasks:         defaultTasks(),
       stats:              recomputedStats,
-      evolutionStage:     challenge.evolutionStage || 0,
+      evolutionStage:     computedEvStage,
       lastLockDate:       null,
       history:            historyArr,
       currentScreen:      'today',
+      // Migrate old caughtPokemon array → caughtLines dict
+      caughtLines: (() => {
+        if (profile.caughtLines) return profile.caughtLines;
+        const lines = {};
+        // Seed current line at computed stage
+        if (profile.pokemonChoice) lines[profile.pokemonChoice] = 0;
+        // Migrate old flat array if present
+        for (const name of (profile.caughtPokemon || [])) {
+          for (const [choice, line] of Object.entries(EVOLUTION_LINES)) {
+            const idx = line.indexOf(name);
+            if (idx >= 0 && (lines[choice] === undefined || lines[choice] < idx)) {
+              lines[choice] = idx;
+            }
+          }
+        }
+        return lines;
+      })(),
+      partnerLine:        profile.partnerLine || null,
+      partnerSince:       partnerSince,
+      shinyUnlocked:      profile.shinyUnlocked || false,
+      showShiny:          profile.showShiny || false,
+      canChooseNewPokemon: profile.canChooseNewPokemon || false,
     });
+
+    // If nickname was out of sync, write the corrected value back to Firebase
+    if (resolvedNickname !== profile.pokemonNickname) {
+      await updateProfileField(uid, 'pokemonNickname', resolvedNickname);
+    }
+
     return true;
   },
 
@@ -252,41 +361,72 @@ const useGameStore = create((set, get) => ({
     const idx = s.history.findIndex(h => h.date === date);
     const existing = idx >= 0 ? s.history[idx] : null;
     const oldTasks = existing?.tasks || defaultTasks();
-    const newTasks = { ...oldTasks, [taskKey]: !oldTasks[taskKey] };
-    const completed = Object.values(newTasks).every(Boolean);
-    const newEntry  = { ...(existing || {}), date, tasks: newTasks, completed };
+
+    const oldVal = oldTasks[taskKey] ?? false;
+    const newVal = oldVal === false ? true : oldVal === true ? 'rest' : false;
+    const newTasks = { ...oldTasks, [taskKey]: newVal };
+    const completed = Object.values(newTasks).every(v => v === true);
+
+    // Record which Pokémon was active the first time this day was logged
+    const activePokemonName = EVOLUTION_LINES[s.pokemonChoice]?.[s.evolutionStage] || s.pokemonChoice;
+    const newEntry = {
+      ...(existing || {}),
+      date, tasks: newTasks, completed,
+      partnerName: existing?.partnerName || activePokemonName,
+    };
 
     const newHistory = idx >= 0
       ? s.history.map((h, i) => (i === idx ? newEntry : h))
       : [...s.history, newEntry].sort((a, b) => (a.date < b.date ? -1 : 1));
 
-    const newStats         = computeStatsFromHistory(newHistory);
+    // Only count history from when this Pokémon was adopted — fresh start for each partner
+    const newStats         = computeStatsFromHistory(newHistory, s.partnerSince);
     const totalCompletedDays = newHistory.filter(h => h.completed).length;
     const currentDay       = totalCompletedDays + 1;
     const currentStreak    = computeStreak(newHistory);
     const longestStreak    = Math.max(s.longestStreak, currentStreak);
 
-    const computedEvStage  = totalCompletedDays >= 50 ? 2 : totalCompletedDays >= 25 ? 1 : 0;
-    const evolutionStage   = Math.max(s.evolutionStage, computedEvStage);
+    const avgStats          = computeAvgStats(newStats);
+    const computedEvStage   = computeEvolutionStageFromStats(newStats);
+    const evolutionStage    = Math.max(s.evolutionStage, computedEvStage);
+
+    // Update caughtLines — one entry per line at its highest stage
+    const newCaughtLines = { ...s.caughtLines };
+    if (newCaughtLines[s.pokemonChoice] === undefined || evolutionStage > newCaughtLines[s.pokemonChoice]) {
+      newCaughtLines[s.pokemonChoice] = evolutionStage;
+    }
+
+    // Shiny unlocks at avg 150 when at final evo
+    const shinyUnlocked       = s.shinyUnlocked || (evolutionStage === 2 && avgStats >= 150);
+    const canChooseNewPokemon = evolutionStage === 2;
+
     let showEvolutionCutscene = s.showEvolutionCutscene;
     let evolutionTarget       = s.evolutionTarget;
+    let pokemonNickname       = s.pokemonNickname;
     if (evolutionStage > s.evolutionStage) {
       showEvolutionCutscene = true;
       evolutionTarget = EVOLUTION_LINES[s.pokemonChoice][evolutionStage];
+      // Only update the nickname if the user never customized it
+      if (isDefaultNickname(s.pokemonNickname, s.pokemonChoice)) {
+        pokemonNickname = evolutionTarget;
+      }
     }
 
     set({ history: newHistory, stats: newStats, totalCompletedDays, currentDay,
-          currentStreak, longestStreak, evolutionStage, showEvolutionCutscene, evolutionTarget });
+          currentStreak, longestStreak, evolutionStage, showEvolutionCutscene,
+          evolutionTarget, pokemonNickname, caughtLines: newCaughtLines,
+          shinyUnlocked, canChooseNewPokemon });
 
-    await saveHistoryEntry(s.uid, date, { tasks: newTasks, completed });
+    await saveHistoryEntry(s.uid, date, { tasks: newTasks, completed, partnerName: newEntry.partnerName });
     await saveChallenge(s.uid, {
       currentDay, currentStreak, isLockedIn: false, waterOz: 0,
       todayTasks: defaultTasks(), stats: newStats, evolutionStage, lastLockDate: null,
     });
     await saveProfile(s.uid, {
       trainerName: s.trainerName, pokemonChoice: s.pokemonChoice,
-      pokemonNickname: s.pokemonNickname, totalCompletedDays,
+      pokemonNickname, totalCompletedDays,
       totalRestarts: s.totalRestarts, longestStreak, themeColor: s.themeColor,
+      caughtLines: newCaughtLines, shinyUnlocked, canChooseNewPokemon,
     });
   },
 
@@ -336,15 +476,18 @@ const useGameStore = create((set, get) => ({
     const newTotal   = s.totalCompletedDays + 1;
     const newLongest = Math.max(s.longestStreak, newStreak);
 
-    let newEvStage = s.evolutionStage;
-    let showEvo    = false;
-    let evoTarget  = null;
+    let newEvStage      = s.evolutionStage;
+    let showEvo         = false;
+    let evoTarget       = null;
+    let newNickname     = s.pokemonNickname;
     if (s.currentDay === 25 && newEvStage === 0) {
       newEvStage = 1; showEvo = true;
       evoTarget  = EVOLUTION_LINES[s.pokemonChoice][1];
+      if (isDefaultNickname(s.pokemonNickname, s.pokemonChoice)) newNickname = evoTarget;
     } else if (s.currentDay === 50 && newEvStage === 1) {
       newEvStage = 2; showEvo = true;
       evoTarget  = EVOLUTION_LINES[s.pokemonChoice][2];
+      if (isDefaultNickname(s.pokemonNickname, s.pokemonChoice)) newNickname = evoTarget;
     }
 
     const historyEntry = { day: s.currentDay, tasks: s.todayTasks, completed: true, waterOz: s.waterOz };
@@ -354,6 +497,7 @@ const useGameStore = create((set, get) => ({
       totalCompletedDays: newTotal, longestStreak: newLongest,
       stats: newStats, evolutionStage: newEvStage,
       showEvolutionCutscene: showEvo, evolutionTarget: evoTarget,
+      pokemonNickname: newNickname,
       isLockedIn: true, lastLockDate: today,
       history: [...s.history, { date: today, ...historyEntry }],
       todayTasks: defaultTasks(), waterOz: 0,
@@ -363,7 +507,7 @@ const useGameStore = create((set, get) => ({
     await saveProfile(s.uid, {
       trainerName:        s.trainerName,
       pokemonChoice:      s.pokemonChoice,
-      pokemonNickname:    s.pokemonNickname,
+      pokemonNickname:    newNickname,
       totalCompletedDays: newTotal,
       totalRestarts:      s.totalRestarts,
       longestStreak:      newLongest,
@@ -378,6 +522,83 @@ const useGameStore = create((set, get) => ({
   },
 
   dismissEvolution: () => set({ showEvolutionCutscene: false, evolutionTarget: null }),
+
+  // ── Choose a new starter after reaching final evolution ───────────────────
+  choosePokemon: async (choice) => {
+    const s = get();
+    if (!s.canChooseNewPokemon) return;
+    // Block any line already in the Pokédex — can never re-catch a line
+    if (s.caughtLines[choice] !== undefined) return;
+    const today = todayDate();
+    // Add new line at stage 0; preserve all existing caught lines
+    const newCaughtLines = { ...s.caughtLines, [choice]: 0 };
+    set({
+      pokemonChoice: choice,
+      pokemonNickname: choice,
+      evolutionStage: 0,
+      stats: defaultStats(),
+      canChooseNewPokemon: false,
+      shinyUnlocked: false,
+      showShiny: false,
+      partnerLine: null,
+      partnerSince: today,
+      caughtLines: newCaughtLines,
+      currentScreen: 'today',
+    });
+    await saveProfile(s.uid, {
+      trainerName: s.trainerName,
+      pokemonChoice: choice,
+      pokemonNickname: choice,
+      totalCompletedDays: s.totalCompletedDays,
+      totalRestarts: s.totalRestarts,
+      longestStreak: s.longestStreak,
+      caughtLines: newCaughtLines,
+      canChooseNewPokemon: false,
+      shinyUnlocked: false,
+      showShiny: false,
+      partnerLine: null,
+      partnerSince: today,
+    });
+    // Reset challenge so evolutionStage:0 is persisted — prevents stale value on reload
+    await saveChallenge(s.uid, {
+      currentDay: s.totalCompletedDays + 1,
+      currentStreak: s.currentStreak,
+      isLockedIn: false, waterOz: 0,
+      todayTasks: defaultTasks(),
+      stats: defaultStats(),
+      evolutionStage: 0,
+      lastLockDate: null,
+    });
+  },
+
+  // Switch display partner to another caught line (null = back to current active)
+  setPartnerLine: async (choice) => {
+    const { uid } = get();
+    set({ partnerLine: choice });
+    if (uid) await updateProfileField(uid, 'partnerLine', choice);
+  },
+
+  toggleShowShiny: async () => {
+    const { uid, showShiny, shinyUnlocked } = get();
+    if (!shinyUnlocked) return;
+    const next = !showShiny;
+    set({ showShiny: next });
+    if (uid) await updateProfileField(uid, 'showShiny', next);
+  },
+
+  // ── History notes ─────────────────────────────────────────────────────────
+  setHistoryNote: async (date, taskKey, note) => {
+    const { uid, history } = get();
+    if (!uid) return;
+    const idx = history.findIndex(h => h.date === date);
+    if (idx < 0) return;
+    const entry = history[idx];
+    const newNotes = { ...(entry.notes || {}), [taskKey]: note };
+    const newEntry = { ...entry, notes: newNotes };
+    const newHistory = history.map((h, i) => i === idx ? newEntry : h);
+    set({ history: newHistory });
+    await saveHistoryEntry(uid, date, { tasks: entry.tasks, completed: entry.completed, notes: newNotes });
+  },
 
   // ── Restart ───────────────────────────────────────────────────────────────
   confirmRestart: async () => {

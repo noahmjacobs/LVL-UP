@@ -118,3 +118,95 @@
   color: rgba(0, 0, 0, 0.75);
   text-shadow: 0 0 4px rgba(255,255,255,0.4);
 }
+
+/* ── Pokédex ── */
+.pokedex-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pokedex-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+
+.pokedex-entry .poke-sprite--xs {
+  width: 64px;
+  height: 64px;
+}
+
+.pokedex-entry {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 2px;
+  border-radius: 6px;
+  border: 1px solid #222;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.pokedex-entry:hover { background: #1a1a1a; border-color: #444; }
+
+.pokedex-entry--active {
+  border-color: var(--green);
+  background: var(--green-dim);
+}
+
+
+/* Shiny star sits in top-right corner of the Pokédex entry */
+.pokedex-shiny-star {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  background: none;
+  border: none;
+  font-size: 12px;
+  cursor: pointer;
+  color: #555;
+  line-height: 1;
+  padding: 0;
+  transition: color 0.15s, text-shadow 0.15s;
+}
+
+.pokedex-shiny-star:hover  { color: #FFD700; }
+
+.pokedex-shiny-star--on {
+  color: #FFD700;
+  text-shadow: 0 0 6px #FFD700;
+}
+
+.pokedex-name {
+  font-size: 4px;
+  color: var(--gray);
+  text-align: center;
+  line-height: 1.4;
+}
+
+.shiny-btn {
+  font-size: 7px;
+  background: none;
+  border: 1px solid #555;
+  color: var(--gray);
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  align-self: center;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.shiny-btn--on {
+  color: #FFD700;
+  border-color: #FFD700;
+  text-shadow: 0 0 8px #FFD700;
+}
+
+.choose-new-btn {
+  background: linear-gradient(135deg, var(--green-dim), transparent);
+  border-color: var(--green);
+  color: var(--green);
+}

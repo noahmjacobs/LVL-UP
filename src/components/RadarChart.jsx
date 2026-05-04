@@ -28,7 +28,11 @@ function dataPath(stats) {
   }).map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${x},${y}`).join(' ') + 'Z';
 }
 
-export default function RadarChart({ stats }) {
+export default function RadarChart({ stats, typeColor }) {
+  const color = typeColor || '#39FF14';
+  // Derive fill: same hue at low opacity
+  const fillColor = color + '26'; // ~15% opacity
+
   return (
     <div className="radar-wrap">
       <svg viewBox="0 0 320 320" className="radar-svg">
@@ -42,7 +46,7 @@ export default function RadarChart({ stats }) {
           return <line key={i} x1={CX} y1={CY} x2={x} y2={y} stroke="#222" strokeWidth="1" />;
         })}
         {/* Data fill */}
-        <path d={dataPath(stats)} fill="rgba(57,255,20,0.15)" stroke="var(--green)" strokeWidth="2" />
+        <path d={dataPath(stats)} fill={fillColor} stroke={color} strokeWidth="2" />
         {/* Labels */}
         {LABELS.map(({ label }, i) => {
           const [x, y] = pt(i * 60, R + 26);

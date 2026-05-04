@@ -185,6 +185,35 @@ html, body {
 }
 .sprite-glow { animation: spriteGlow 2.5s ease-in-out infinite; }
 
+/* ── Pokémon bounce ── */
+@keyframes pokeBounce {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-6px); }
+}
+.poke-bounce { animation: pokeBounce 1.8s ease-in-out infinite; }
+
+/* When both glow + bounce are on the same element, run both animations */
+.sprite-glow.poke-bounce {
+  animation: spriteGlow 2.5s ease-in-out infinite, pokeBounce 1.8s ease-in-out infinite;
+}
+
+/* ── Shiny sprite glow (white + gold) ── */
+@keyframes shinyGlow {
+  0%, 100% {
+    filter:
+      drop-shadow(0 0 4px #ffffff)
+      drop-shadow(0 0 8px #FFD700)
+      brightness(1);
+  }
+  50% {
+    filter:
+      drop-shadow(0 0 10px #ffffff)
+      drop-shadow(0 0 20px #FFD700)
+      brightness(1.15);
+  }
+}
+.sprite-glow-shiny { animation: shinyGlow 2.5s ease-in-out infinite; }
+
 /* ── Evolution flash ── */
 @keyframes evoFlash {
   0%   { filter: brightness(1); }
@@ -194,13 +223,6 @@ html, body {
   100% { filter: brightness(1); }
 }
 .evo-flash { animation: evoFlash 0.6s ease; }
-
-/* ── Pokémon bounce ── */
-@keyframes pokeBounce {
-  0%, 100% { transform: translateY(0); }
-  50%       { transform: translateY(-6px); }
-}
-.poke-bounce { animation: pokeBounce 1.8s ease-in-out infinite; }
 
 /* ── Text crawl (typewriter) ── */
 @keyframes typewriter {

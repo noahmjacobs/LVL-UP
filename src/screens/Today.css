@@ -45,6 +45,30 @@
 .tracker-corner {
   flex: 0 0 50px;
   border-bottom: 1px solid #1e1e1e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Edit button ── */
+.edit-btn {
+  background: none;
+  border: none;
+  color: var(--gray);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  transition: color 0.15s, transform 0.15s;
+  border-radius: 4px;
+}
+
+.edit-btn:hover  { color: var(--white); }
+.edit-btn:active { transform: scale(0.85); }
+
+.edit-btn--active {
+  color: var(--green);
+  text-shadow: 0 0 6px var(--green);
 }
 
 .tracker-label-item {
@@ -58,9 +82,83 @@
   font-weight: 700;
   line-height: 1.6;
   border-bottom: 1px solid #111;
+  transition: background 0.15s;
+  position: relative;
 }
 
 .tracker-label-item:last-child { border-bottom: none; }
+
+.tracker-label-item--editable {
+  cursor: pointer;
+  padding-left: 8px;
+}
+
+.tracker-label-item--editable:active {
+  background: #1e1e1e;
+}
+
+/* Small colored dot shown in edit mode */
+.label-color-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  margin-bottom: 3px;
+  flex-shrink: 0;
+}
+
+/* ── Color picker overlay ── */
+.color-picker-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.color-picker-popup {
+  background: #161616;
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 20px;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 0 30px rgba(0,0,0,0.8);
+}
+
+.color-picker-title {
+  font-size: 8px;
+  color: var(--white);
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+.color-picker-swatches {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: 100%;
+}
+
+.color-swatch {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.1s, border-color 0.1s;
+}
+
+.color-swatch:active { transform: scale(0.88); }
+
+.color-swatch--selected {
+  border-color: var(--white);
+  box-shadow: 0 0 8px rgba(255,255,255,0.4);
+}
 
 /* ── Scroll container (day columns only) ── */
 .tracker-scroll {
@@ -135,3 +233,4 @@
 
 .tracker-cell:active  { transform: scale(0.88); }
 .tracker-cell--done   { border-color: transparent; }
+.tracker-cell--rest  { border-color: transparent; }

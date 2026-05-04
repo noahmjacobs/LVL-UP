@@ -11,6 +11,49 @@
 .poke-sprite--lg  { width: 140px; height: 140px; }
 .poke-sprite--xl  { width: 200px; height: 200px; }
 
+/* ── Shiny wrapper ── */
+.shiny-wrapper {
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* Img inside the wrapper fills it completely */
+.poke-sprite--fill {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain;
+}
+
+/* ── Shiny sparkles ── */
+@keyframes sparkle-float {
+  0%   { opacity: 0;   transform: translateY(0)    scale(0.4); }
+  25%  { opacity: 1;   transform: translateY(-5px) scale(1);   }
+  75%  { opacity: 0.8; transform: translateY(-10px) scale(0.8);}
+  100% { opacity: 0;   transform: translateY(-16px) scale(0.3);}
+}
+
+.shiny-sparkle {
+  position: absolute;
+  color: #FFD700;
+  font-size: 9px;
+  pointer-events: none;
+  opacity: 0;
+  animation: sparkle-float 2.4s ease-in-out infinite;
+  text-shadow: 0 0 6px #FFD700, 0 0 12px #fff8;
+  line-height: 1;
+}
+
+/* 8 sparkles scattered around the sprite with staggered delays */
+.shiny-sparkle--1 { top: 8%;  left: 18%; animation-delay: 0.0s; }
+.shiny-sparkle--2 { top: 4%;  left: 62%; animation-delay: 0.5s; }
+.shiny-sparkle--3 { top: 28%; left: 88%; animation-delay: 1.0s; }
+.shiny-sparkle--4 { top: 62%; left: 78%; animation-delay: 1.5s; }
+.shiny-sparkle--5 { top: 72%; left: 28%; animation-delay: 2.0s; }
+.shiny-sparkle--6 { top: 48%; left: 4%;  animation-delay: 0.3s; }
+.shiny-sparkle--7 { top: 18%; left: 48%; animation-delay: 0.8s; }
+.shiny-sparkle--8 { top: 82%; left: 54%; animation-delay: 1.3s; }
+
 .poke-sprite--md.poke-sprite--png {
   width: 96px;
   height: 96px;

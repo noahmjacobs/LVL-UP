@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import useGameStore from '../store/useGameStore';
+import useGameStore, { EVOLUTION_LINES } from '../store/useGameStore';
 import PokemonSprite from '../components/PokemonSprite';
 import { getPokemonTypeColor } from '../constants/pokemonTypes';
 import { THEMES } from '../constants/themes';
@@ -8,20 +8,29 @@ import './Profile.css';
 export default function Profile() {
   const {
     trainerName, pokemonChoice, pokemonNickname, setPokemonNickname,
-    currentDay, currentStreak, totalCompletedDays, totalRestarts,
-    longestStreak, stats, getCurrentPokemon, evolutionStage, logout,
+    currentDay, currentStreak, longestStreak, getCurrentPokemon, evolutionStage, logout,
     themeColor, setThemeColor,
+    caughtLines, partnerLine, setPartnerLine,
+    shinyUnlocked, showShiny, toggleShowShiny,
+    canChooseNewPokemon, goToScreen,
   } = useGameStore();
 
   const [editing, setEditing] = useState(false);
   const [nickDraft, setNickDraft] = useState(pokemonNickname || pokemonChoice || '');
   const [showThemePicker, setShowThemePicker] = useState(false);
   const pokemon = getCurrentPokemon();
-  const glowColor = getPokemonTypeColor(pokemon);
-  const overallProgress = Math.round(
-    (Object.values(stats).reduce((a, b) => a + b, 0) / (6 * 100)) * 100
-  );
 
+  // Always key type color off the choice key (starter name), not the form name
+  const displayChoice = partnerLine || pokemonChoice;
+  const displayStage  = partnerLine !== null && caughtLines[partnerLine] !== undefined
+    ? caughtLines[partnerLine]
+    : evolutionStage;
+  const glowColor = getPokemonTypeColor(displayChoice);
+
+  // Nickname: custom name for active line, form name for any partner
+  const displayNickname = partnerLine !== null && caughtLines[partnerLine] !== undefined
+    ? EVOLUTION_LINES[partnerLine]?.[caughtLines[partnerLine]] || partnerLine
+    : (pokemonNickname || pokemonChoice);
   const saveNick = () => {
     setPokemonNickname(nickDraft.trim() || pokemonChoice);
     setEditing(false);
@@ -44,7 +53,7 @@ export default function Profile() {
         {/* Partner nickname */}
         <div className="profile-nick-row">
           <span className="pixel" style={{ fontSize: 8, color: 'var(--gray)' }}>PARTNER:</span>
-          {editing ? (
+          {editing && partnerLine === null ? (
             <input
               className="pixel profile-nick-input"
               value={nickDraft}
@@ -54,30 +63,29 @@ export default function Profile() {
               onKeyDown={(e) => e.key === 'Enter' && saveNick()}
             />
           ) : (
-            <span className="pixel profile-nick">{pokemonNickname || pokemonChoice}</span>
+            <span className="pixel profile-nick">{displayNickname}</span>
           )}
-          <button
-            className="btn profile-nick-btn pixel"
-            onClick={editing ? saveNick : () => setEditing(true)}
-          >
-            {editing ? 'SAVE' : 'RENAME'}
-          </button>
+          {partnerLine === null && (
+            <button
+              className="btn profile-nick-btn pixel"
+              onClick={editing ? saveNick : () => setEditing(true)}
+            >
+              {editing ? 'SAVE' : 'RENAME'}
+            </button>
+          )}
         </div>
 
         <div className="profile-evo-tag pixel">
-          EVO STAGE: {'★'.repeat(evolutionStage + 1)}{'☆'.repeat(2 - evolutionStage)}
+          EVO STAGE: {'★'.repeat(displayStage + 1)}{'☆'.repeat(2 - displayStage)}
         </div>
       </div>
 
       {/* Stats grid */}
       <div className="profile-stats-grid">
         {[
-          { label: 'CURRENT DAY',    val: currentDay,         color: 'var(--green)' },
-          { label: 'STREAK',         val: currentStreak,      color: 'var(--yellow)' },
-          { label: 'DAYS COMPLETED', val: totalCompletedDays, color: 'var(--blue)' },
-          { label: 'RESTARTS',       val: totalRestarts,      color: 'var(--red)' },
-          { label: 'BEST STREAK',    val: longestStreak,      color: 'var(--yellow)' },
-          { label: 'OVERALL',        val: `${overallProgress}%`, color: 'var(--green)' },
+          { label: 'CURRENT DAY',  val: currentDay,    color: 'var(--green)'  },
+          { label: 'STREAK',       val: currentStreak, color: 'var(--yellow)' },
+          { label: 'BEST STREAK',  val: longestStreak, color: 'var(--yellow)' },
         ].map(({ label, val, color }) => (
           <div key={label} className="profile-stat-tile card">
             <span className="pixel profile-stat-val" style={{ color }}>{val}</span>
@@ -85,6 +93,61 @@ export default function Profile() {
           </div>
         ))}
       </div>
+
+      {/* Pokédex — one card per evolution LINE at its current stage */}
+      {Object.keys(caughtLines).length > 0 && (
+        <div className="pokedex-section card">
+          <p className="pixel" style={{ fontSize: 8, color: 'var(--gray)', marginBottom: 12 }}>POKÉDEX</p>
+          <div className="pokedex-grid">
+            {Object.entries(caughtLines).map(([choice, stage]) => {
+              const name = EVOLUTION_LINES[choice]?.[stage];
+              if (!name) return null;
+              const isCurrentLine = choice === pokemonChoice;
+              const isDisplayed   = (partnerLine === choice) || (!partnerLine && isCurrentLine);
+              // Shiny star appears only on your active final-form when shiny is unlocked
+              const canShine      = isCurrentLine && shinyUnlocked && stage === 2 && !partnerLine;
+              const spriteName    = (canShine && showShiny) ? `shiny${name}` : name;
+
+              return (
+                <div
+                  key={choice}
+                  className={`pokedex-entry${isDisplayed ? ' pokedex-entry--active' : ''}`}
+                  onClick={() => {
+                    if (isCurrentLine) {
+                      // Clicking active line: clear any partner so active is shown
+                      if (partnerLine !== null) setPartnerLine(null);
+                    } else {
+                      setPartnerLine(partnerLine === choice ? null : choice);
+                    }
+                  }}
+                >
+                  {canShine && (
+                    <button
+                      className={`pokedex-shiny-star${showShiny ? ' pokedex-shiny-star--on' : ''}`}
+                      title={showShiny ? 'Shiny ON' : 'Unlock shiny'}
+                      onClick={(e) => { e.stopPropagation(); toggleShowShiny(); }}
+                    >
+                      {showShiny ? '★' : '☆'}
+                    </button>
+                  )}
+                  <PokemonSprite name={spriteName} size="xs" png />
+                  <span className="pixel pokedex-name">{name.toUpperCase()}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {canChooseNewPokemon && (
+        <button
+          className="btn btn--full pixel choose-new-btn"
+          style={{ fontSize: 7 }}
+          onClick={() => goToScreen('chooseNewPokemon')}
+        >
+          ✦ CHOOSE NEW PARTNER
+        </button>
+      )}
 
       <div className="profile-footer card">
         <p className="pixel" style={{ fontSize: 8, color: 'var(--gray)', textAlign: 'center', lineHeight: 2 }}>
