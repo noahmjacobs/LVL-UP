@@ -8,10 +8,18 @@ export default function TitleScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState('');
 
-  useEffect(() => { playTitleTheme(); }, []);
+  useEffect(() => {
+    const handleFirstInteraction = () => {
+      playTitleTheme();
+      document.removeEventListener('click', handleFirstInteraction);
+    };
+    document.addEventListener('click', handleFirstInteraction);
+    return () => document.removeEventListener('click', handleFirstInteraction);
+  }, []);
 
   const handleGoogle = async () => {
     if (loading) return;
+    playTitleTheme();
     setError('');
     setLoading(true);
     try {
