@@ -14,7 +14,9 @@ const STAT_INFO = [
 ];
 
 export default function Stats() {
-  const { stats, getCurrentPokemon, pokemonNickname, pokemonChoice, partnerLine, caughtLines } = useGameStore();
+  const { stats, lineStats, getCurrentPokemon, pokemonNickname, pokemonChoice, partnerLine, caughtLines } = useGameStore();
+  // Show stats for whichever line is currently displayed (active or a caught partner)
+  const displayStats = lineStats[partnerLine || pokemonChoice] || stats;
   const pokemon = getCurrentPokemon();
 
   // Always use the displayed Pokémon's choice key for color and nickname
@@ -38,12 +40,12 @@ export default function Stats() {
       )}
 
       {/* Radar chart — colored by Pokémon type */}
-      <RadarChart stats={stats} typeColor={typeColor} />
+      <RadarChart stats={displayStats} typeColor={typeColor} />
 
       {/* Stat breakdown */}
       <div className="stats-list">
         {STAT_INFO.map(({ key, label, desc }) => {
-          const val = stats[key] || 0;
+          const val = displayStats[key] || 0;
           return (
             <div key={key} className="stat-row card">
               <div className="stat-row__top">

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import useGameStore, { EVOLUTION_LINES } from '../store/useGameStore';
 import PokemonSprite from '../components/PokemonSprite';
 import { getPokemonTypeColor } from '../constants/pokemonTypes';
@@ -16,7 +16,13 @@ export default function Profile() {
   } = useGameStore();
 
   const [editing, setEditing] = useState(false);
-  const [nickDraft, setNickDraft] = useState(pokemonNickname || pokemonChoice || '');
+  const [nickDraft, setNickDraft] = useState('');
+
+  // Reset draft whenever the displayed line changes
+  useEffect(() => {
+    setNickDraft(displayNickname || '');
+    setEditing(false);
+  }, [displayChoice]);
   const [showThemePicker, setShowThemePicker] = useState(false);
   const pokemon = getCurrentPokemon();
 
@@ -36,7 +42,7 @@ export default function Profile() {
     return EVOLUTION_LINES[displayChoice]?.[stage] || displayChoice;
   })();
   const saveNick = () => {
-    setPokemonNickname(nickDraft.trim() || pokemonChoice);
+    setPokemonNickname(nickDraft.trim() || displayChoice, displayChoice);
     setEditing(false);
   };
 
@@ -57,7 +63,7 @@ export default function Profile() {
         {/* Partner nickname */}
         <div className="profile-nick-row">
           <span className="pixel" style={{ fontSize: 8, color: 'var(--gray)' }}>PARTNER:</span>
-          {editing && partnerLine === null ? (
+          {editing ? (
             <input
               className="pixel profile-nick-input"
               value={nickDraft}
@@ -69,14 +75,12 @@ export default function Profile() {
           ) : (
             <span className="pixel profile-nick">{displayNickname}</span>
           )}
-          {partnerLine === null && (
-            <button
-              className="btn profile-nick-btn pixel"
-              onClick={editing ? saveNick : () => setEditing(true)}
-            >
-              {editing ? 'SAVE' : 'RENAME'}
-            </button>
-          )}
+          <button
+            className="btn profile-nick-btn pixel"
+            onClick={editing ? saveNick : () => { setNickDraft(displayNickname || ''); setEditing(true); }}
+          >
+            {editing ? 'SAVE' : 'RENAME'}
+          </button>
         </div>
 
         <div className="profile-evo-tag pixel">

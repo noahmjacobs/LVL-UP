@@ -66,11 +66,13 @@ const isStreakDay = (entry) => {
 
 // startDate (YYYY-MM-DD): when provided, only count entries on/after that date.
 // This resets stats to 0 when a new Pokémon is chosen.
-const computeStatsFromHistory = (history, startDate = null) => {
+// Compute stats for a single partner line — only entries where partnerName is in that line's forms
+const computeStatsForChoice = (history, choice) => {
+  const forms = new Set(EVOLUTION_LINES[choice] || [choice]);
   const stats = defaultStats();
   for (const h of history) {
     if (!h.tasks) continue;
-    if (startDate && h.date < startDate) continue;
+    if (!forms.has(h.partnerName)) continue;
     if (h.tasks.diet === true)     stats.discipline  = Math.min(STAT_MAX, stats.discipline  + STAT_INCREMENT);
     if (h.tasks.read === true)     stats.focus       = Math.min(STAT_MAX, stats.focus       + STAT_INCREMENT);
     if (h.tasks.workout1 === true && h.tasks.workout2 === true)
@@ -81,6 +83,15 @@ const computeStatsFromHistory = (history, startDate = null) => {
                                    stats.consistency = Math.min(STAT_MAX, stats.consistency + STAT_INCREMENT);
   }
   return stats;
+};
+
+// Compute stats for every caught line at once
+const computeAllLineStats = (history, caughtLines) => {
+  const result = {};
+  for (const choice of Object.keys(caughtLines)) {
+    result[choice] = computeStatsForChoice(history, choice);
+  }
+  return result;
 };
 
 const computeStreak = (history) => {
@@ -129,7 +140,8 @@ const useGameStore = create((set, get) => ({
   isLockedIn: false,
 
   // ── Stats ────────────────────────────────────────────────────────────────
-  stats: defaultStats(),
+  stats:     defaultStats(),
+  lineStats: {},   // { [choice]: statsObj } — per-line stats keyed by pokemonChoice
 
   // ── Theme ────────────────────────────────────────────────────────────────
   themeColor:   DEFAULT_THEME,
@@ -229,12 +241,16 @@ const useGameStore = create((set, get) => ({
   // ── Onboarding actions ────────────────────────────────────────────────────
   setTrainerName:    (name)   => set({ trainerName: name }),
   setPokemonChoice:  (choice) => set({ pokemonChoice: choice }),
-  setPokemonNickname: async (name) => {
+  setPokemonNickname: async (name, targetChoice) => {
     const { uid, pokemonChoice, pokemonNicknames } = get();
-    const newNicknames = { ...pokemonNicknames, [pokemonChoice]: name };
-    set({ pokemonNickname: name, pokemonNicknames: newNicknames });
+    const choice = targetChoice || pokemonChoice;
+    const newNicknames = { ...pokemonNicknames, [choice]: name };
+    // Only update the compat single-string field when editing the active line
+    const patch = { pokemonNicknames: newNicknames };
+    if (choice === pokemonChoice) patch.pokemonNickname = name;
+    set(patch);
     if (uid) {
-      await updateProfileField(uid, 'pokemonNickname', name);
+      if (choice === pokemonChoice) await updateProfileField(uid, 'pokemonNickname', name);
       await updateProfileField(uid, 'pokemonNicknames', newNicknames);
     }
   },
@@ -276,7 +292,12 @@ const useGameStore = create((set, get) => ({
       : [];
 
     const partnerSince     = profile.partnerSince || null;
-    const recomputedStats  = computeStatsFromHistory(historyArr, partnerSince);
+    // Build a temp caughtLines map that always includes the current choice
+    const allLines = profile.caughtLines
+      ? { ...profile.caughtLines }
+      : (profile.pokemonChoice ? { [profile.pokemonChoice]: 0 } : {});
+    const recomputedLineStats = computeAllLineStats(historyArr, allLines);
+    const recomputedStats     = recomputedLineStats[profile.pokemonChoice] || defaultStats();
     const totalCompleted   = historyArr.filter(h => h.completed).length;
     const recomputedStreak = computeStreak(historyArr);
 
@@ -308,6 +329,7 @@ const useGameStore = create((set, get) => ({
       waterOz:            0,
       todayTasks:         defaultTasks(),
       stats:              recomputedStats,
+      lineStats:          recomputedLineStats,
       evolutionStage:     computedEvStage,
       lastLockDate:       null,
       history:            historyArr,
@@ -391,8 +413,10 @@ const useGameStore = create((set, get) => ({
       ? s.history.map((h, i) => (i === idx ? newEntry : h))
       : [...s.history, newEntry].sort((a, b) => (a.date < b.date ? -1 : 1));
 
-    // Only count history from when this Pokémon was adopted — fresh start for each partner
-    const newStats         = computeStatsFromHistory(newHistory, s.partnerSince);
+    // Compute stats per partner line, keyed by partnerName in each history entry
+    const linesForStats    = { ...s.caughtLines, [s.pokemonChoice]: s.evolutionStage };
+    const newLineStats     = computeAllLineStats(newHistory, linesForStats);
+    const newStats         = newLineStats[s.pokemonChoice] || defaultStats();
     const totalCompletedDays = newHistory.filter(h => h.completed).length;
     const currentDay       = totalCompletedDays + 1;
     const currentStreak    = computeStreak(newHistory);
@@ -432,7 +456,7 @@ const useGameStore = create((set, get) => ({
     // Also update per-line nicknames if the nickname auto-updated on evolution
     const newPokemonNicknames = { ...s.pokemonNicknames, [s.pokemonChoice]: pokemonNickname };
 
-    set({ history: newHistory, stats: newStats, totalCompletedDays, currentDay,
+    set({ history: newHistory, stats: newStats, lineStats: newLineStats, totalCompletedDays, currentDay,
           currentStreak, longestStreak, evolutionStage, showEvolutionCutscene,
           evolutionTarget, pokemonNickname, caughtLines: newCaughtLines,
           shinyLines: newShinyLines, pokemonNicknames: newPokemonNicknames, canChooseNewPokemon });
@@ -557,12 +581,15 @@ const useGameStore = create((set, get) => ({
     const newShinyLines      = { ...s.shinyLines, [choice]: { unlocked: false, show: false } };
     // Preserve nicknames for old lines; initialize new line with starter name
     const newPokemonNicknames = { ...s.pokemonNicknames, [choice]: choice };
+    // Preserve per-line stats for old lines; new line starts empty
+    const newLineStats       = { ...s.lineStats, [choice]: defaultStats() };
 
     set({
       pokemonChoice: choice,
       pokemonNickname: choice,
       evolutionStage: 0,
       stats: defaultStats(),
+      lineStats: newLineStats,
       canChooseNewPokemon: false,
       shinyLines: newShinyLines,
       pokemonNicknames: newPokemonNicknames,
