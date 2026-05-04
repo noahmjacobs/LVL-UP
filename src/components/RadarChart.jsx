@@ -34,7 +34,18 @@ export default function RadarChart({ stats }) {
       <svg viewBox="0 0 320 320" className="radar-svg">
         {/* Grid rings */}
         {[0.25, 0.5, 0.75, 1].map((scale) => (
-          <path key={scale} d={hexPath(R * scale)} fill="none" stroke="#222" strokeWidth="1" />
+          <g key={scale}>
+            <path d={hexPath(R * scale)} fill="none" stroke="#222" strokeWidth="1" />
+            <text
+              x={CX + 3}
+              y={CY - R * scale + 8}
+              fill="#444"
+              fontSize="6"
+              fontFamily="'Press Start 2P', monospace"
+            >
+              {Math.round(252 * scale)}
+            </text>
+          </g>
         ))}
         {/* Spokes */}
         {LABELS.map((_, i) => {
