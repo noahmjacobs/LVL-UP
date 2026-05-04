@@ -9,6 +9,7 @@ export default function TitleScreen() {
   const [error, setError]     = useState('');
 
   useEffect(() => {
+    playTitleTheme();
     const handleFirstInteraction = () => {
       playTitleTheme();
       document.removeEventListener('click', handleFirstInteraction);
@@ -19,7 +20,6 @@ export default function TitleScreen() {
 
   const handleGoogle = async () => {
     if (loading) return;
-    playTitleTheme();
     setError('');
     setLoading(true);
     try {
