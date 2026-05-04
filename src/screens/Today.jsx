@@ -94,49 +94,57 @@ export default function Today() {
         {pokemon && <PokemonSprite name={pokemon} size="md" glow bounce />}
       </div>
 
-      <div
-        className="tracker-scroll"
-        ref={scrollRef}
-        onMouseDown={onMouseDown}
-        onMouseMove={onMouseMove}
-        onMouseUp={stopDrag}
-        onMouseLeave={stopDrag}
-      >
-        <div className="tracker-inner">
+      <div className="tracker-wrapper">
 
-          {/* Day header row */}
-          <div className="tracker-row tracker-header-row">
-            <div className="tracker-sticky-col" />
-            {DAYS.map(({ date, dayName, dayNum, month, isToday, showMonth }) => (
-              <div key={date} className={`tracker-day-hdr${isToday ? ' tracker-day-hdr--today' : ''}`}>
-                {showMonth && <span className="pixel tracker-month">{month}</span>}
-                <span className="pixel tracker-day-name">{dayName}</span>
-                <span className="pixel tracker-day-num-lbl">{dayNum}</span>
+        {/* Fixed label column — lives outside the scroll container */}
+        <div className="tracker-labels-col">
+          <div className="tracker-corner" />
+          {HABITS.map(({ key, label }) => (
+            <div key={key} className="tracker-label-item pixel">{label}</div>
+          ))}
+        </div>
+
+        {/* Horizontally scrollable day grid */}
+        <div
+          className="tracker-scroll"
+          ref={scrollRef}
+          onMouseDown={onMouseDown}
+          onMouseMove={onMouseMove}
+          onMouseUp={stopDrag}
+          onMouseLeave={stopDrag}
+        >
+          <div className="tracker-inner">
+
+            <div className="tracker-header-row">
+              {DAYS.map(({ date, dayName, dayNum, month, isToday, showMonth }) => (
+                <div key={date} className={`tracker-day-hdr${isToday ? ' tracker-day-hdr--today' : ''}`}>
+                  {showMonth && <span className="pixel tracker-month">{month}</span>}
+                  <span className="pixel tracker-day-name">{dayName}</span>
+                  <span className="pixel tracker-day-num-lbl">{dayNum}</span>
+                </div>
+              ))}
+            </div>
+
+            {HABITS.map(({ key, color }) => (
+              <div key={key} className="tracker-row">
+                {DAYS.map(({ date }) => {
+                  const done = !!(historyMap[date]?.[key]);
+                  return (
+                    <div
+                      key={date}
+                      className={`tracker-cell${done ? ' tracker-cell--done' : ''}`}
+                      style={done ? { background: color, boxShadow: `0 0 6px ${color}44` } : undefined}
+                      onClick={() => toggleHistoryTask(date, key)}
+                    />
+                  );
+                })}
               </div>
             ))}
+
           </div>
-
-          {/* Habit rows */}
-          {HABITS.map(({ key, label, color }) => (
-            <div key={key} className="tracker-row">
-              <div className="tracker-sticky-col tracker-label pixel">{label}</div>
-              {DAYS.map(({ date }) => {
-                const done = !!(historyMap[date]?.[key]);
-                return (
-                  <div
-                    key={date}
-                    className={`tracker-cell${done ? ' tracker-cell--done' : ''}`}
-                    style={done ? { background: color, boxShadow: `0 0 6px ${color}44` } : undefined}
-                    onClick={() => toggleHistoryTask(date, key)}
-                  />
-                );
-              })}
-            </div>
-          ))}
-
         </div>
-      </div>
 
+      </div>
     </div>
   );
 }
