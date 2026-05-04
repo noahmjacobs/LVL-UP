@@ -155,8 +155,10 @@ const useGameStore = create((set, get) => ({
   caughtLines:           {},
   partnerLine:           null,   // null = show current active line, or a choice key e.g. 'squirtle'
   partnerSince:          null,   // YYYY-MM-DD when current pokemonChoice was adopted; stats only count from here
-  shinyUnlocked:         false,  // true when avg ≥ 150 at final evo
-  showShiny:             false,  // user toggle
+  // Per-line shiny state — preserved across partner switches
+  shinyLines:            {},     // { [choice]: { unlocked: bool, show: bool } }
+  // Per-line custom nicknames — preserved across partner switches
+  pokemonNicknames:      {},     // { [choice]: string }
   canChooseNewPokemon:   false,  // true when evolutionStage === 2
 
   // ── History ──────────────────────────────────────────────────────────────
@@ -164,7 +166,7 @@ const useGameStore = create((set, get) => ({
 
   // ── Computed ─────────────────────────────────────────────────────────────
   getCurrentPokemon() {
-    const { pokemonChoice, evolutionStage, partnerLine, caughtLines, showShiny, shinyUnlocked } = get();
+    const { pokemonChoice, evolutionStage, partnerLine, caughtLines, shinyLines } = get();
     let choice, stage;
     if (partnerLine !== null && caughtLines[partnerLine] !== undefined) {
       choice = partnerLine;
@@ -176,7 +178,8 @@ const useGameStore = create((set, get) => ({
     if (!choice) return null;
     const baseName = EVOLUTION_LINES[choice]?.[stage];
     if (!baseName) return null;
-    if (showShiny && shinyUnlocked) return `shiny${baseName}`;
+    const lineShiny = shinyLines[choice];
+    if (lineShiny?.unlocked && lineShiny?.show) return `shiny${baseName}`;
     return baseName;
   },
 
@@ -221,7 +224,7 @@ const useGameStore = create((set, get) => ({
       todayTasks: defaultTasks(), waterOz: 0, isLockedIn: false,
       stats: defaultStats(), evolutionStage: 0, history: [],
       caughtLines: {}, partnerLine: null, partnerSince: null,
-      shinyUnlocked: false, showShiny: false, canChooseNewPokemon: false,
+      shinyLines: {}, pokemonNicknames: {}, canChooseNewPokemon: false,
     });
   },
 
@@ -243,9 +246,13 @@ const useGameStore = create((set, get) => ({
   setTrainerName:    (name)   => set({ trainerName: name }),
   setPokemonChoice:  (choice) => set({ pokemonChoice: choice }),
   setPokemonNickname: async (name) => {
-    const { uid } = get();
-    set({ pokemonNickname: name });
-    if (uid) await updateProfileField(uid, 'pokemonNickname', name);
+    const { uid, pokemonChoice, pokemonNicknames } = get();
+    const newNicknames = { ...pokemonNicknames, [pokemonChoice]: name };
+    set({ pokemonNickname: name, pokemonNicknames: newNicknames });
+    if (uid) {
+      await updateProfileField(uid, 'pokemonNickname', name);
+      await updateProfileField(uid, 'pokemonNicknames', newNicknames);
+    }
   },
   goToScreen:        (screen) => set({ currentScreen: screen }),
 
@@ -340,14 +347,35 @@ const useGameStore = create((set, get) => ({
       })(),
       partnerLine:        profile.partnerLine || null,
       partnerSince:       partnerSince,
-      shinyUnlocked:      profile.shinyUnlocked || false,
-      showShiny:          profile.showShiny || false,
+      // Load per-line shiny state, migrating legacy global shinyUnlocked/showShiny if needed
+      shinyLines: (() => {
+        if (profile.shinyLines) return profile.shinyLines;
+        // Migrate: old single-bool flags → per-line entry for current pokemon
+        const lines = {};
+        if (profile.pokemonChoice && profile.shinyUnlocked) {
+          lines[profile.pokemonChoice] = { unlocked: true, show: profile.showShiny || false };
+        }
+        return lines;
+      })(),
+      // Load per-line nicknames, seeding from current nickname if not stored yet
+      pokemonNicknames: (() => {
+        if (profile.pokemonNicknames) return profile.pokemonNicknames;
+        const nicks = {};
+        if (profile.pokemonChoice) {
+          nicks[profile.pokemonChoice] = resolvedNickname;
+        }
+        return nicks;
+      })(),
       canChooseNewPokemon: profile.canChooseNewPokemon || false,
     });
 
     // If nickname was out of sync, write the corrected value back to Firebase
     if (resolvedNickname !== profile.pokemonNickname) {
       await updateProfileField(uid, 'pokemonNickname', resolvedNickname);
+    }
+    // First-time migration: persist pokemonNicknames to Firebase if it didn't exist
+    if (!profile.pokemonNicknames && profile.pokemonChoice) {
+      await updateProfileField(uid, 'pokemonNicknames', { [profile.pokemonChoice]: resolvedNickname });
     }
 
     return true;
@@ -396,8 +424,13 @@ const useGameStore = create((set, get) => ({
       newCaughtLines[s.pokemonChoice] = evolutionStage;
     }
 
-    // Shiny unlocks at avg 150 when at final evo
-    const shinyUnlocked       = s.shinyUnlocked || (evolutionStage === 2 && avgStats >= 150);
+    // Shiny unlocks per-line at avg 150 when at final evo
+    const lineWasUnlocked = s.shinyLines[s.pokemonChoice]?.unlocked || false;
+    const lineNowUnlocked = lineWasUnlocked || (evolutionStage === 2 && avgStats >= 150);
+    const newShinyLines   = {
+      ...s.shinyLines,
+      [s.pokemonChoice]: { unlocked: lineNowUnlocked, show: s.shinyLines[s.pokemonChoice]?.show || false },
+    };
     const canChooseNewPokemon = evolutionStage === 2;
 
     let showEvolutionCutscene = s.showEvolutionCutscene;
@@ -412,10 +445,13 @@ const useGameStore = create((set, get) => ({
       }
     }
 
+    // Also update per-line nicknames if the nickname auto-updated on evolution
+    const newPokemonNicknames = { ...s.pokemonNicknames, [s.pokemonChoice]: pokemonNickname };
+
     set({ history: newHistory, stats: newStats, totalCompletedDays, currentDay,
           currentStreak, longestStreak, evolutionStage, showEvolutionCutscene,
           evolutionTarget, pokemonNickname, caughtLines: newCaughtLines,
-          shinyUnlocked, canChooseNewPokemon });
+          shinyLines: newShinyLines, pokemonNicknames: newPokemonNicknames, canChooseNewPokemon });
 
     await saveHistoryEntry(s.uid, date, { tasks: newTasks, completed, partnerName: newEntry.partnerName });
     await saveChallenge(s.uid, {
@@ -426,7 +462,8 @@ const useGameStore = create((set, get) => ({
       trainerName: s.trainerName, pokemonChoice: s.pokemonChoice,
       pokemonNickname, totalCompletedDays,
       totalRestarts: s.totalRestarts, longestStreak, themeColor: s.themeColor,
-      caughtLines: newCaughtLines, shinyUnlocked, canChooseNewPokemon,
+      caughtLines: newCaughtLines, shinyLines: newShinyLines, pokemonNicknames: newPokemonNicknames,
+      canChooseNewPokemon,
     });
   },
 
@@ -532,14 +569,19 @@ const useGameStore = create((set, get) => ({
     const today = todayDate();
     // Add new line at stage 0; preserve all existing caught lines
     const newCaughtLines = { ...s.caughtLines, [choice]: 0 };
+    // Preserve shiny state for old lines; initialize new line at unlocked:false
+    const newShinyLines      = { ...s.shinyLines, [choice]: { unlocked: false, show: false } };
+    // Preserve nicknames for old lines; initialize new line with starter name
+    const newPokemonNicknames = { ...s.pokemonNicknames, [choice]: choice };
+
     set({
       pokemonChoice: choice,
       pokemonNickname: choice,
       evolutionStage: 0,
       stats: defaultStats(),
       canChooseNewPokemon: false,
-      shinyUnlocked: false,
-      showShiny: false,
+      shinyLines: newShinyLines,
+      pokemonNicknames: newPokemonNicknames,
       partnerLine: null,
       partnerSince: today,
       caughtLines: newCaughtLines,
@@ -554,8 +596,8 @@ const useGameStore = create((set, get) => ({
       longestStreak: s.longestStreak,
       caughtLines: newCaughtLines,
       canChooseNewPokemon: false,
-      shinyUnlocked: false,
-      showShiny: false,
+      shinyLines: newShinyLines,
+      pokemonNicknames: newPokemonNicknames,
       partnerLine: null,
       partnerSince: today,
     });
@@ -578,12 +620,14 @@ const useGameStore = create((set, get) => ({
     if (uid) await updateProfileField(uid, 'partnerLine', choice);
   },
 
-  toggleShowShiny: async () => {
-    const { uid, showShiny, shinyUnlocked } = get();
-    if (!shinyUnlocked) return;
-    const next = !showShiny;
-    set({ showShiny: next });
-    if (uid) await updateProfileField(uid, 'showShiny', next);
+  toggleShowShiny: async (choice) => {
+    const { uid, shinyLines } = get();
+    const line = shinyLines[choice];
+    if (!line?.unlocked) return;
+    const newLine      = { ...line, show: !line.show };
+    const newShinyLines = { ...shinyLines, [choice]: newLine };
+    set({ shinyLines: newShinyLines });
+    if (uid) await updateProfileField(uid, 'shinyLines', newShinyLines);
   },
 
   // ── History notes ─────────────────────────────────────────────────────────

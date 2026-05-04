@@ -7,11 +7,11 @@ import './Profile.css';
 
 export default function Profile() {
   const {
-    trainerName, pokemonChoice, pokemonNickname, setPokemonNickname,
-    currentDay, currentStreak, longestStreak, getCurrentPokemon, evolutionStage, logout,
+    trainerName, pokemonChoice, pokemonNickname, pokemonNicknames, setPokemonNickname,
+    currentDay, currentStreak, getCurrentPokemon, evolutionStage, logout,
     themeColor, setThemeColor,
     caughtLines, partnerLine, setPartnerLine,
-    shinyUnlocked, showShiny, toggleShowShiny,
+    shinyLines, toggleShowShiny,
     canChooseNewPokemon, goToScreen,
   } = useGameStore();
 
@@ -27,10 +27,14 @@ export default function Profile() {
     : evolutionStage;
   const glowColor = getPokemonTypeColor(displayChoice);
 
-  // Nickname: custom name for active line, form name for any partner
-  const displayNickname = partnerLine !== null && caughtLines[partnerLine] !== undefined
-    ? EVOLUTION_LINES[partnerLine]?.[caughtLines[partnerLine]] || partnerLine
-    : (pokemonNickname || pokemonChoice);
+  // Nickname: use per-line stored nickname; fall back to form name, then choice key
+  const displayNickname = (() => {
+    const stored = pokemonNicknames[displayChoice];
+    if (stored) return stored;
+    // Fall back to form name from evolution line
+    const stage = displayChoice === pokemonChoice ? displayStage : caughtLines[displayChoice] ?? 0;
+    return EVOLUTION_LINES[displayChoice]?.[stage] || displayChoice;
+  })();
   const saveNick = () => {
     setPokemonNickname(nickDraft.trim() || pokemonChoice);
     setEditing(false);
@@ -85,7 +89,6 @@ export default function Profile() {
         {[
           { label: 'CURRENT DAY',  val: currentDay,    color: 'var(--green)'  },
           { label: 'STREAK',       val: currentStreak, color: 'var(--yellow)' },
-          { label: 'BEST STREAK',  val: longestStreak, color: 'var(--yellow)' },
         ].map(({ label, val, color }) => (
           <div key={label} className="profile-stat-tile card">
             <span className="pixel profile-stat-val" style={{ color }}>{val}</span>
@@ -104,9 +107,10 @@ export default function Profile() {
               if (!name) return null;
               const isCurrentLine = choice === pokemonChoice;
               const isDisplayed   = (partnerLine === choice) || (!partnerLine && isCurrentLine);
-              // Shiny star appears only on your active final-form when shiny is unlocked
-              const canShine      = isCurrentLine && shinyUnlocked && stage === 2 && !partnerLine;
-              const spriteName    = (canShine && showShiny) ? `shiny${name}` : name;
+              // Shiny star appears on any caught final-form that has shiny unlocked
+              const lineShiny     = shinyLines[choice];
+              const canShine      = !!lineShiny?.unlocked && stage === 2;
+              const spriteName    = (canShine && lineShiny?.show) ? `shiny${name}` : name;
 
               return (
                 <div
@@ -123,11 +127,11 @@ export default function Profile() {
                 >
                   {canShine && (
                     <button
-                      className={`pokedex-shiny-star${showShiny ? ' pokedex-shiny-star--on' : ''}`}
-                      title={showShiny ? 'Shiny ON' : 'Unlock shiny'}
-                      onClick={(e) => { e.stopPropagation(); toggleShowShiny(); }}
+                      className={`pokedex-shiny-star${lineShiny?.show ? ' pokedex-shiny-star--on' : ''}`}
+                      title={lineShiny?.show ? 'Shiny ON' : 'Toggle shiny'}
+                      onClick={(e) => { e.stopPropagation(); toggleShowShiny(choice); }}
                     >
-                      {showShiny ? '★' : '☆'}
+                      {lineShiny?.show ? '★' : '☆'}
                     </button>
                   )}
                   <PokemonSprite name={spriteName} size="xs" png />
