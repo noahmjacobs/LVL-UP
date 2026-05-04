@@ -1,5 +1,5 @@
 .today-screen {
-  padding: 20px 16px;
+  padding: 20px 16px 32px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -11,68 +11,101 @@
   align-items: center;
 }
 
-.today-day {
-  font-size: 28px;
-  color: var(--green);
+.today-day-num {
+  font-size: 22px;
   margin-top: 6px;
   line-height: 1.2;
 }
 
-.today-sprite-wrap {
+.today-day-total {
+  font-size: 13px;
+  color: var(--gray);
+}
+
+/* ── Week navigation ── */
+.today-week-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.today-nav-btn {
+  font-size: 22px;
+  background: none;
+  border: 1px solid #333;
+  color: var(--white);
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 80px;
+  line-height: 1;
+  flex-shrink: 0;
 }
 
-.today-progress {
+.today-nav-btn--disabled { opacity: 0.25; cursor: default; }
+
+.today-week-label { font-size: 8px; }
+
+/* ── Habit grid ── */
+.habit-grid {
   display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.habit-row {
+  display: grid;
+  grid-template-columns: 70px repeat(7, 1fr);
+  gap: 4px;
   align-items: center;
-  gap: 10px;
 }
 
-.today-progress__bar {
-  flex: 1;
-  height: 6px;
-  background: #222;
-  border-radius: 3px;
-  overflow: hidden;
+.habit-row--header {
+  margin-bottom: 2px;
 }
 
-.today-progress__fill {
-  height: 100%;
-  background: var(--green);
-  border-radius: 3px;
-  transition: width 0.4s ease;
+.habit-label-cell {
+  font-size: 6px;
+  color: var(--gray);
+  line-height: 1.6;
+  padding-right: 4px;
 }
 
-.today-locked-banner {
-  text-align: center;
-  padding: 12px;
-}
-
-.today-tasks {
+.habit-day-col {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  gap: 2px;
+  color: var(--gray);
 }
 
-.today-footer {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding-top: 4px;
-  padding-bottom: 8px;
+.habit-day-col--today {
+  color: var(--white);
 }
 
-.today-warning {
-  font-size: 8px;
-  color: var(--red);
-  text-align: center;
-  line-height: 1.8;
+.habit-cell {
+  aspect-ratio: 1;
+  border-radius: 5px;
+  background: #1a1a1a;
+  border: 1px solid #252525;
+  cursor: pointer;
+  transition: transform 0.1s, background 0.15s;
 }
 
-.today-lockin {
-  font-size: 10px;
-  padding: 16px;
+.habit-cell:active:not(.habit-cell--future) {
+  transform: scale(0.88);
+}
+
+.habit-cell--done {
+  border-color: transparent;
+}
+
+.habit-cell--future {
+  background: #111;
+  border-color: #1a1a1a;
+  cursor: default;
+  opacity: 0.3;
 }

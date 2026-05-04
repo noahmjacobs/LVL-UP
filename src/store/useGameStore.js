@@ -49,6 +49,34 @@ const defaultStats = () => ({
 
 const todayDate = () => new Date().toISOString().split('T')[0];
 
+const computeStatsFromHistory = (history) => {
+  const stats = defaultStats();
+  for (const h of history) {
+    if (!h.tasks) continue;
+    if (h.tasks.diet)     stats.discipline  = Math.min(100, stats.discipline  + STAT_INCREMENT);
+    if (h.tasks.read)     stats.focus       = Math.min(100, stats.focus       + STAT_INCREMENT);
+    if (h.tasks.workout1 && h.tasks.workout2)
+                          stats.energy      = Math.min(100, stats.energy      + STAT_INCREMENT);
+    if (h.tasks.water)    stats.health      = Math.min(100, stats.health      + STAT_INCREMENT);
+    if (h.tasks.photo)    stats.habits      = Math.min(100, stats.habits      + STAT_INCREMENT);
+    if (Object.values(h.tasks).every(Boolean))
+                          stats.consistency = Math.min(100, stats.consistency + STAT_INCREMENT);
+  }
+  return stats;
+};
+
+const computeStreak = (history) => {
+  const completedSet = new Set(history.filter(h => h.completed).map(h => h.date));
+  let streak = 0;
+  const d = new Date(todayDate() + 'T12:00:00');
+  while (true) {
+    const str = d.toISOString().split('T')[0];
+    if (completedSet.has(str)) { streak++; d.setDate(d.getDate() - 1); }
+    else break;
+  }
+  return streak;
+};
+
 const useGameStore = create((set, get) => ({
   // ── Auth ─────────────────────────────────────────────────────────────────
   uid:         null,
@@ -185,8 +213,9 @@ const useGameStore = create((set, get) => ({
       ? Object.entries(history).map(([date, v]) => ({ date, ...v }))
       : [];
 
-    const today = todayDate();
-    const alreadyLockedToday = challenge?.lastLockDate === today;
+    const recomputedStats  = computeStatsFromHistory(historyArr);
+    const totalCompleted   = historyArr.filter(h => h.completed).length;
+    const recomputedStreak = computeStreak(historyArr);
 
     const savedTheme = profile.themeColor || DEFAULT_THEME;
     applyTheme(savedTheme);
@@ -197,24 +226,70 @@ const useGameStore = create((set, get) => ({
       pokemonChoice:      profile.pokemonChoice,
       pokemonNickname:    profile.pokemonNickname,
       themeColor:         savedTheme,
-      totalCompletedDays: profile.totalCompletedDays || 0,
-      totalRestarts:      profile.totalRestarts      || 0,
-      longestStreak:      profile.longestStreak      || 0,
-      currentDay:         challenge.currentDay       || 1,
-      currentStreak:      challenge.currentStreak    || 1,
-      isLockedIn:         alreadyLockedToday,
-      waterOz:            alreadyLockedToday ? (challenge.waterOz   || 0)             : 0,
-      todayTasks:         alreadyLockedToday ? (challenge.todayTasks || defaultTasks()) : defaultTasks(),
-      stats:              challenge.stats            || defaultStats(),
-      evolutionStage:     challenge.evolutionStage   || 0,
-      lastLockDate:       challenge.lastLockDate      || null,
+      totalCompletedDays: totalCompleted,
+      totalRestarts:      profile.totalRestarts || 0,
+      longestStreak:      Math.max(profile.longestStreak || 0, recomputedStreak),
+      currentDay:         totalCompleted + 1,
+      currentStreak:      recomputedStreak,
+      isLockedIn:         false,
+      waterOz:            0,
+      todayTasks:         defaultTasks(),
+      stats:              recomputedStats,
+      evolutionStage:     challenge.evolutionStage || 0,
+      lastLockDate:       null,
       history:            historyArr,
       currentScreen:      'today',
     });
     return true;
   },
 
-  // ── Task toggling ─────────────────────────────────────────────────────────
+  // ── Habit grid toggle (new tracker model) ────────────────────────────────
+  toggleHistoryTask: async (date, taskKey) => {
+    const s = get();
+    if (!s.uid || date > todayDate()) return;
+
+    const idx = s.history.findIndex(h => h.date === date);
+    const existing = idx >= 0 ? s.history[idx] : null;
+    const oldTasks = existing?.tasks || defaultTasks();
+    const newTasks = { ...oldTasks, [taskKey]: !oldTasks[taskKey] };
+    const completed = Object.values(newTasks).every(Boolean);
+    const newEntry  = { ...(existing || {}), date, tasks: newTasks, completed };
+
+    const newHistory = idx >= 0
+      ? s.history.map((h, i) => (i === idx ? newEntry : h))
+      : [...s.history, newEntry].sort((a, b) => (a.date < b.date ? -1 : 1));
+
+    const newStats         = computeStatsFromHistory(newHistory);
+    const totalCompletedDays = newHistory.filter(h => h.completed).length;
+    const currentDay       = totalCompletedDays + 1;
+    const currentStreak    = computeStreak(newHistory);
+    const longestStreak    = Math.max(s.longestStreak, currentStreak);
+
+    const computedEvStage  = totalCompletedDays >= 50 ? 2 : totalCompletedDays >= 25 ? 1 : 0;
+    const evolutionStage   = Math.max(s.evolutionStage, computedEvStage);
+    let showEvolutionCutscene = s.showEvolutionCutscene;
+    let evolutionTarget       = s.evolutionTarget;
+    if (evolutionStage > s.evolutionStage) {
+      showEvolutionCutscene = true;
+      evolutionTarget = EVOLUTION_LINES[s.pokemonChoice][evolutionStage];
+    }
+
+    set({ history: newHistory, stats: newStats, totalCompletedDays, currentDay,
+          currentStreak, longestStreak, evolutionStage, showEvolutionCutscene, evolutionTarget });
+
+    await saveHistoryEntry(s.uid, date, { tasks: newTasks, completed });
+    await saveChallenge(s.uid, {
+      currentDay, currentStreak, isLockedIn: false, waterOz: 0,
+      todayTasks: defaultTasks(), stats: newStats, evolutionStage, lastLockDate: null,
+    });
+    await saveProfile(s.uid, {
+      trainerName: s.trainerName, pokemonChoice: s.pokemonChoice,
+      pokemonNickname: s.pokemonNickname, totalCompletedDays,
+      totalRestarts: s.totalRestarts, longestStreak, themeColor: s.themeColor,
+    });
+  },
+
+  // ── Task toggling (legacy) ────────────────────────────────────────────────
   toggleTask: (taskKey) => {
     const { isLockedIn, todayTasks } = get();
     if (isLockedIn) return;
