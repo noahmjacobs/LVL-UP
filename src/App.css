@@ -52,6 +52,11 @@ html, body {
   -webkit-overflow-scrolling: touch;
 }
 
+.screen--immersive {
+  overflow: hidden;
+  padding-bottom: 0;
+}
+
 /* ── Typography ── */
 .pixel { font-family: var(--font-pixel); }
 

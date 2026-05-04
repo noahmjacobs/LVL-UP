@@ -53,7 +53,7 @@ export default function App() {
 
       {!inOnboarding && currentScreen !== 'restart' && currentScreen !== 'title' && (
         <>
-          <div className="screen">
+          <div className={`screen${currentScreen === 'today' ? ' screen--immersive' : ''}`}>
             {currentScreen === 'today'   && <Today />}
             {currentScreen === 'stats'   && <Stats />}
             {currentScreen === 'history' && <History />}
