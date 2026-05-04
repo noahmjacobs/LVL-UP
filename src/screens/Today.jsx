@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import useGameStore from '../store/useGameStore';
 import TaskCard from '../components/TaskCard';
 import WaterTracker from '../components/WaterTracker';
 import PokemonSprite from '../components/PokemonSprite';
+import { fadeOutTitleTheme } from '../audio';
 import './Today.css';
 
 const TASKS = [
@@ -19,6 +20,8 @@ export default function Today() {
     toggleTask, lockInDay, getCurrentPokemon,
     stats, pokemonNickname, pokemonChoice,
   } = useGameStore();
+
+  useEffect(() => { fadeOutTitleTheme(); }, []);
 
   const [locking, setLocking] = useState(false);
   const currentPokemon = getCurrentPokemon();
