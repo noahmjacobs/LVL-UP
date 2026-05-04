@@ -17,7 +17,8 @@ import ChooseNewPokemon from './screens/ChooseNewPokemon';
 import NavBar           from './components/NavBar';
 import EvolutionCutscene from './components/EvolutionCutscene';
 
-const ONBOARDING = ['professor', 'nameEntry', 'starterSelect'];
+const ONBOARDING    = new Set(['professor', 'nameEntry', 'starterSelect']);
+const MAIN_SCREENS  = new Set(['today', 'stats', 'history', 'profile']);
 
 export default function App() {
   const { currentScreen, authLoading, handleAuthResolved, showEvolutionCutscene, themeColor } = useGameStore();
@@ -41,7 +42,7 @@ export default function App() {
     );
   }
 
-  const inOnboarding = ONBOARDING.includes(currentScreen);
+  const inOnboarding = ONBOARDING.has(currentScreen);
 
   return (
     <div className="app-shell">
@@ -59,7 +60,7 @@ export default function App() {
         </div>
       )}
 
-      {!inOnboarding && currentScreen !== 'restart' && currentScreen !== 'title' && currentScreen !== 'pokeballIntro' && currentScreen !== 'chooseNewPokemon' && (
+      {MAIN_SCREENS.has(currentScreen) && (
         <>
           <div className={`screen${currentScreen === 'today' ? ' screen--immersive' : ''}`}>
             {currentScreen === 'today'   && <Today />}

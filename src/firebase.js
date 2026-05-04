@@ -4,7 +4,6 @@ import {
   getAuth,
   signInWithPopup,
   GoogleAuthProvider,
-  OAuthProvider,
   signOut as firebaseSignOut,
   onAuthStateChanged,
 } from 'firebase/auth';
@@ -23,7 +22,6 @@ const app            = initializeApp(firebaseConfig);
 const db             = getDatabase(app);
 const auth           = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
-const appleProvider  = new OAuthProvider('apple.com');
 
 export { db, auth, ref, set, get, onAuthStateChanged };
 
@@ -31,11 +29,6 @@ export { db, auth, ref, set, get, onAuthStateChanged };
 
 export async function signInWithGoogle() {
   const result = await signInWithPopup(auth, googleProvider);
-  return result.user;
-}
-
-export async function signInWithApple() {
-  const result = await signInWithPopup(auth, appleProvider);
   return result.user;
 }
 

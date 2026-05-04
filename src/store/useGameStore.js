@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import {
-  signInWithGoogle, signInWithApple, signOut,
+  signInWithGoogle, signOut,
   saveProfile, saveChallenge, saveHistoryEntry, loadUser, updateProfileField,
 } from '../firebase';
 import { applyTheme, DEFAULT_THEME } from '../constants/themes';
@@ -205,10 +205,6 @@ const useGameStore = create((set, get) => ({
   loginWithGoogle: async () => {
     await signInWithGoogle();
     // onAuthStateChanged in App.jsx handles the rest
-  },
-
-  loginWithApple: async () => {
-    await signInWithApple();
   },
 
   logout: async () => {

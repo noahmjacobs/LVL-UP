@@ -89,7 +89,7 @@ export default function ChooseNewPokemon() {
             <div className="starter-grid fade-in">
               {starters.map((s) => {
                 const color = getPokemonTypeColor(s.id);
-                const type  = getPokemonType ? getPokemonType(s.id).toUpperCase() : '';
+                const type  = getPokemonType(s.id).toUpperCase();
                 const isCaught = caughtLines[s.id] !== undefined;
                 return (
                   <div

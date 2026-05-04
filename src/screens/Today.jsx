@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import useGameStore from '../store/useGameStore';
 import PokemonSprite from '../components/PokemonSprite';
-import { getPokemonTypeColor } from '../constants/themes';
+import { getPokemonTypeColor } from '../constants/pokemonTypes';
 import { fadeOutTitleTheme } from '../audio';
 import './Today.css';
 
@@ -84,8 +84,11 @@ export default function Today() {
   };
   const stopDrag = () => { dragging.current = false; };
 
-  const historyMap = {};
-  history.forEach(h => { if (h.tasks) historyMap[h.date] = h.tasks; });
+  const historyMap = useMemo(() => {
+    const map = {};
+    history.forEach(h => { if (h.tasks) map[h.date] = h.tasks; });
+    return map;
+  }, [history]);
 
   const pokemon = getCurrentPokemon();
   // Use the displayed Pokémon's type color, not the active line's

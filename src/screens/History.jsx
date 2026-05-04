@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import useGameStore from '../store/useGameStore';
 import PokemonSprite from '../components/PokemonSprite';
 import './History.css';
@@ -21,20 +21,25 @@ export default function History() {
   const [noteInput,    setNoteInput]    = useState('');
   const [notePopup,    setNotePopup]    = useState(null);   // taskKey whose note is shown
 
-  const historyMap = {};
-  history.forEach((entry) => { historyMap[entry.date] = entry; });
+  const historyMap = useMemo(() => {
+    const map = {};
+    history.forEach((entry) => { map[entry.date] = entry; });
+    return map;
+  }, [history]);
 
   // Build a 75-day calendar grid
-  const today = new Date();
-  const days = Array.from({ length: 75 }, (_, i) => {
-    const d = new Date(today);
-    d.setDate(d.getDate() - (currentDay - 2 - i));
-    const dateStr = d.toISOString().split('T')[0];
-    const entry = historyMap[dateStr];
-    const dayNum = i + 1;
-    const isFuture = dayNum >= currentDay;
-    return { dayNum, dateStr, entry, isFuture };
-  });
+  const days = useMemo(() => {
+    const today = new Date();
+    return Array.from({ length: 75 }, (_, i) => {
+      const d = new Date(today);
+      d.setDate(d.getDate() - (currentDay - 2 - i));
+      const dateStr = d.toISOString().split('T')[0];
+      const entry = historyMap[dateStr];
+      const dayNum = i + 1;
+      const isFuture = dayNum >= currentDay;
+      return { dayNum, dateStr, entry, isFuture };
+    });
+  }, [history, currentDay, historyMap]);
 
   const selectDay = (dayNum, dateStr, entry) => {
     if (selected?.dayNum === dayNum) {
@@ -71,10 +76,12 @@ export default function History() {
   };
 
   // Only count fully completed days (all 6 tasks true) since current partner was adopted
-  const completedThisRun = history.filter(h =>
-    h.completed && (!partnerSince || h.date >= partnerSince)
-  ).length;
-  const progressPct = Math.min(100, Math.round((completedThisRun / 75) * 100));
+  const progressPct = useMemo(() => {
+    const completedThisRun = history.filter(h =>
+      h.completed && (!partnerSince || h.date >= partnerSince)
+    ).length;
+    return Math.min(100, Math.round((completedThisRun / 75) * 100));
+  }, [history, partnerSince]);
 
   return (
     <div className="history-screen">

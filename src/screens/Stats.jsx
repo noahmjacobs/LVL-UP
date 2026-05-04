@@ -1,7 +1,7 @@
 import useGameStore, { EVOLUTION_LINES } from '../store/useGameStore';
 import RadarChart from '../components/RadarChart';
 import PokemonSprite from '../components/PokemonSprite';
-import { getPokemonTypeColor } from '../constants/themes';
+import { getPokemonTypeColor } from '../constants/pokemonTypes';
 import './Stats.css';
 
 const STAT_INFO = [
