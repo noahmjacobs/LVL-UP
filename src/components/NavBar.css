@@ -32,11 +32,3 @@
 
 .navbar__icon { font-size: 18px; line-height: 1; }
 .navbar__label { font-size: 7px; letter-spacing: 0.5px; }
-
-/* Push navbar above the home indicator on iPhone PWA */
-@media (display-mode: standalone) {
-  .navbar {
-    padding-bottom: env(safe-area-inset-bottom);
-    height: calc(var(--nav-h) + env(safe-area-inset-bottom));
-  }
-}
