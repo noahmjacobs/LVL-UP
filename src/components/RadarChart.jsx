@@ -23,8 +23,8 @@ function hexPath(r) {
 
 function dataPath(stats) {
   return LABELS.map(({ key }, i) => {
-    const val = Math.max(0, Math.min(100, stats[key] || 0));
-    return pt(i * 60, R * (val / 100));
+    const val = Math.max(0, Math.min(252, stats[key] || 0));
+    return pt(i * 60, R * (val / 252));
   }).map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${x},${y}`).join(' ') + 'Z';
 }
 

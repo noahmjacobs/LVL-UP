@@ -53,11 +53,11 @@ export default function Stats() {
               <div className="stat-row__top">
                 <span className="pixel stat-row__label">{label}</span>
                 <span className="pixel stat-row__val" style={{ color: 'var(--green)' }}>
-                  {val.toFixed(1)}
+                  {Math.round(val)}<span style={{ fontSize: 7, color: 'var(--gray)' }}>/252</span>
                 </span>
               </div>
               <div className="stat-bar" style={{ marginTop: 8 }}>
-                <div className="stat-bar__fill" style={{ width: `${val}%` }} />
+                <div className="stat-bar__fill" style={{ width: `${(val / 252) * 100}%` }} />
               </div>
               <p className="stat-row__desc">{desc}</p>
             </div>

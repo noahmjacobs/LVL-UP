@@ -5,7 +5,8 @@ import {
 } from '../firebase';
 import { applyTheme, DEFAULT_THEME } from '../constants/themes';
 
-const STAT_INCREMENT = 1.35;
+const STAT_MAX       = 252;
+const STAT_INCREMENT = STAT_MAX / 75; // 3.36 per completed day — hits 252 at day 75
 
 const EVOLUTION_LINES = {
   charmander: ['charmander', 'charmeleon', 'charizard'],
@@ -53,14 +54,14 @@ const computeStatsFromHistory = (history) => {
   const stats = defaultStats();
   for (const h of history) {
     if (!h.tasks) continue;
-    if (h.tasks.diet)     stats.discipline  = Math.min(100, stats.discipline  + STAT_INCREMENT);
-    if (h.tasks.read)     stats.focus       = Math.min(100, stats.focus       + STAT_INCREMENT);
+    if (h.tasks.diet)     stats.discipline  = Math.min(STAT_MAX,stats.discipline  + STAT_INCREMENT);
+    if (h.tasks.read)     stats.focus       = Math.min(STAT_MAX,stats.focus       + STAT_INCREMENT);
     if (h.tasks.workout1 && h.tasks.workout2)
-                          stats.energy      = Math.min(100, stats.energy      + STAT_INCREMENT);
-    if (h.tasks.water)    stats.health      = Math.min(100, stats.health      + STAT_INCREMENT);
-    if (h.tasks.photo)    stats.habits      = Math.min(100, stats.habits      + STAT_INCREMENT);
+                          stats.energy      = Math.min(STAT_MAX,stats.energy      + STAT_INCREMENT);
+    if (h.tasks.water)    stats.health      = Math.min(STAT_MAX,stats.health      + STAT_INCREMENT);
+    if (h.tasks.photo)    stats.habits      = Math.min(STAT_MAX,stats.habits      + STAT_INCREMENT);
     if (Object.values(h.tasks).every(Boolean))
-                          stats.consistency = Math.min(100, stats.consistency + STAT_INCREMENT);
+                          stats.consistency = Math.min(STAT_MAX,stats.consistency + STAT_INCREMENT);
   }
   return stats;
 };
@@ -323,12 +324,12 @@ const useGameStore = create((set, get) => ({
     }
 
     const newStats = { ...s.stats };
-    if (s.todayTasks.diet)                              newStats.discipline = Math.min(100, newStats.discipline + STAT_INCREMENT);
-    if (s.todayTasks.read)                              newStats.focus      = Math.min(100, newStats.focus      + STAT_INCREMENT);
-    if (s.todayTasks.workout1 && s.todayTasks.workout2) newStats.energy     = Math.min(100, newStats.energy     + STAT_INCREMENT);
-    if (s.todayTasks.water)                             newStats.health     = Math.min(100, newStats.health     + STAT_INCREMENT);
-    if (s.todayTasks.photo)                             newStats.habits     = Math.min(100, newStats.habits     + STAT_INCREMENT);
-    newStats.consistency = Math.min(100, newStats.consistency + STAT_INCREMENT);
+    if (s.todayTasks.diet)                              newStats.discipline = Math.min(STAT_MAX,newStats.discipline + STAT_INCREMENT);
+    if (s.todayTasks.read)                              newStats.focus      = Math.min(STAT_MAX,newStats.focus      + STAT_INCREMENT);
+    if (s.todayTasks.workout1 && s.todayTasks.workout2) newStats.energy     = Math.min(STAT_MAX,newStats.energy     + STAT_INCREMENT);
+    if (s.todayTasks.water)                             newStats.health     = Math.min(STAT_MAX,newStats.health     + STAT_INCREMENT);
+    if (s.todayTasks.photo)                             newStats.habits     = Math.min(STAT_MAX,newStats.habits     + STAT_INCREMENT);
+    newStats.consistency = Math.min(STAT_MAX,newStats.consistency + STAT_INCREMENT);
 
     const newDay     = s.currentDay + 1;
     const newStreak  = s.currentStreak + 1;
