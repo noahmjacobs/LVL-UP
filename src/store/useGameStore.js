@@ -24,18 +24,6 @@ const EVOLUTION_LINES = {
   snivy:      ['snivy',      'servine',    'serperior'],
   tepig:      ['tepig',      'pignite',    'emboar'],
   oshawott:   ['oshawott',   'dewott',     'samurott'],
-  chespin:    ['chespin',    'quilladin',  'chesnaught'],
-  fennekin:   ['fennekin',   'braixen',    'delphox'],
-  froakie:    ['froakie',    'frogadier',  'greninja'],
-  rowlet:     ['rowlet',     'dartrix',    'decidueye'],
-  litten:     ['litten',     'torracat',   'incineroar'],
-  popplio:    ['popplio',    'brionne',    'primarina'],
-  grookey:    ['grookey',    'thwackey',   'rillaboom'],
-  scorbunny:  ['scorbunny',  'raboot',     'cinderace'],
-  sobble:     ['sobble',     'drizzile',   'inteleon'],
-  sprigatito: ['sprigatito', 'floragato',  'meowscarada'],
-  fuecoco:    ['fuecoco',    'crocalor',   'skeledirge'],
-  quaxly:     ['quaxly',     'quaxwell',   'quaquaval'],
 };
 
 const defaultTasks = () => ({

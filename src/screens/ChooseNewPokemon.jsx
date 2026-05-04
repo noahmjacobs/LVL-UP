@@ -30,26 +30,6 @@ const ALL_STARTERS = [
     { id: 'tepig',    label: 'TEPIG'    },
     { id: 'oshawott', label: 'OSHAWOTT' },
   ]},
-  { gen: 'GEN VI',  starters: [
-    { id: 'chespin',  label: 'CHESPIN'  },
-    { id: 'fennekin', label: 'FENNEKIN' },
-    { id: 'froakie',  label: 'FROAKIE'  },
-  ]},
-  { gen: 'GEN VII', starters: [
-    { id: 'rowlet',  label: 'ROWLET'  },
-    { id: 'litten',  label: 'LITTEN'  },
-    { id: 'popplio', label: 'POPPLIO' },
-  ]},
-  { gen: 'GEN VIII', starters: [
-    { id: 'grookey',   label: 'GROOKEY'   },
-    { id: 'scorbunny', label: 'SCORBUNNY' },
-    { id: 'sobble',    label: 'SOBBLE'    },
-  ]},
-  { gen: 'GEN IX',  starters: [
-    { id: 'sprigatito', label: 'SPRIGATITO' },
-    { id: 'fuecoco',    label: 'FUECOCO'    },
-    { id: 'quaxly',     label: 'QUAXLY'     },
-  ]},
 ];
 
 export default function ChooseNewPokemon() {

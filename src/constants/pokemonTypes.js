@@ -81,54 +81,6 @@ export const POKEMON_PRIMARY_TYPE = {
   oshawott:    'water',
   dewott:      'water',
   samurott:    'water',
-  // Chespin line
-  chespin:     'grass',
-  quilladin:   'grass',
-  chesnaught:  'grass',
-  // Fennekin line
-  fennekin:    'fire',
-  braixen:     'fire',
-  delphox:     'psychic',
-  // Froakie line
-  froakie:     'water',
-  frogadier:   'water',
-  greninja:    'water',
-  // Rowlet line
-  rowlet:      'grass',
-  dartrix:     'grass',
-  decidueye:   'grass',
-  // Litten line
-  litten:      'fire',
-  torracat:    'fire',
-  incineroar:  'fire',
-  // Popplio line
-  popplio:     'water',
-  brionne:     'water',
-  primarina:   'water',
-  // Grookey line
-  grookey:     'grass',
-  thwackey:    'grass',
-  rillaboom:   'grass',
-  // Scorbunny line
-  scorbunny:   'fire',
-  raboot:      'fire',
-  cinderace:   'fire',
-  // Sobble line
-  sobble:      'water',
-  drizzile:    'water',
-  inteleon:    'water',
-  // Sprigatito line
-  sprigatito:  'grass',
-  floragato:   'grass',
-  meowscarada: 'grass',
-  // Fuecoco line
-  fuecoco:     'fire',
-  crocalor:    'fire',
-  skeledirge:  'fire',
-  // Quaxly line
-  quaxly:      'water',
-  quaxwell:    'water',
-  quaquaval:   'water',
 };
 
 export function getPokemonTypeColor(pokemonName) {
