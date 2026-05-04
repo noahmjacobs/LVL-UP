@@ -15,6 +15,7 @@ export default function Profile() {
 
   const [editing, setEditing] = useState(false);
   const [nickDraft, setNickDraft] = useState(pokemonNickname || pokemonChoice || '');
+  const [showThemePicker, setShowThemePicker] = useState(false);
   const pokemon = getCurrentPokemon();
   const glowColor = getPokemonTypeColor(pokemon);
   const overallProgress = Math.round(
@@ -91,21 +92,37 @@ export default function Profile() {
         </p>
       </div>
 
-      {/* Theme picker */}
-      <div className="card profile-theme-card">
-        <p className="pixel" style={{ fontSize: 8, color: 'var(--gray)', marginBottom: 12 }}>ACCENT COLOR</p>
-        <div className="profile-theme-grid">
-          {THEMES.map((t) => (
-            <button
-              key={t.id}
-              className={`profile-theme-swatch${themeColor === t.id ? ' profile-theme-swatch--active' : ''}`}
-              style={{ background: t.accent }}
-              onClick={() => setThemeColor(t.id)}
-              title={t.label}
-            />
-          ))}
+      <button
+        className="btn btn--full pixel profile-theme-btn"
+        style={{ fontSize: 8 }}
+        onClick={() => setShowThemePicker(true)}
+      >
+        <span
+          className="profile-theme-dot"
+          style={{ background: THEMES.find((t) => t.id === themeColor)?.accent }}
+        />
+        ACCENT COLOR
+      </button>
+
+      {showThemePicker && (
+        <div className="theme-overlay" onClick={() => setShowThemePicker(false)}>
+          <div className="theme-popup card" onClick={(e) => e.stopPropagation()}>
+            <p className="pixel" style={{ fontSize: 8, color: 'var(--gray)', marginBottom: 14 }}>CHOOSE ACCENT</p>
+            <div className="theme-popup-grid">
+              {THEMES.map((t) => (
+                <button
+                  key={t.id}
+                  className={`profile-theme-swatch${themeColor === t.id ? ' profile-theme-swatch--active' : ''}`}
+                  style={{ background: t.accent }}
+                  onClick={() => { setThemeColor(t.id); setShowThemePicker(false); }}
+                >
+                  <span className="pixel theme-swatch-label">{t.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
       <button className="btn btn--red btn--full pixel" style={{ fontSize: 8 }} onClick={logout}>
         SIGN OUT

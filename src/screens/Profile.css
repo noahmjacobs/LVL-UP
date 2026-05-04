@@ -58,26 +58,63 @@
 
 .profile-footer { padding: 16px; }
 
-.profile-theme-card { padding: 14px 14px 16px; }
+.profile-theme-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
 
-.profile-theme-grid {
+.profile-theme-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.theme-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+.theme-popup {
+  width: min(320px, 90vw);
+  padding: 20px;
+}
+
+.theme-popup-grid {
   display: grid;
-  grid-template-columns: repeat(9, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
 }
 
 .profile-theme-swatch {
-  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 8px;
   aspect-ratio: 1;
-  border-radius: 50%;
+  border-radius: 8px;
   border: 2px solid transparent;
   cursor: pointer;
   transition: transform 0.15s, border-color 0.15s;
 }
 
-.profile-theme-swatch:hover { transform: scale(1.15); }
+.profile-theme-swatch:hover { transform: scale(1.05); }
 
 .profile-theme-swatch--active {
   border-color: var(--white);
-  transform: scale(1.15);
+  transform: scale(1.05);
+}
+
+.theme-swatch-label {
+  font-size: 6px;
+  color: rgba(0, 0, 0, 0.75);
+  text-shadow: 0 0 4px rgba(255,255,255,0.4);
 }
