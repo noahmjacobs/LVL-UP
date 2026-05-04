@@ -30,6 +30,15 @@
   transition: border-color 0.15s, background 0.15s;
 }
 
+.starter-sprite-wrap {
+  width: 96px;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+}
+
 .starter-card--selected {
   border-color: var(--accent);
   background: color-mix(in srgb, var(--accent) 8%, var(--bg-card));
@@ -44,6 +53,34 @@
   border-radius: 2px;
   color: #000;
   letter-spacing: 1px;
+}
+
+.starter-gen-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.starter-gen-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  background: none;
+  border: none;
+  border-bottom: 1px solid #222;
+  padding: 6px 2px;
+  font-size: 7px;
+  color: var(--gray);
+  letter-spacing: 2px;
+  cursor: pointer;
+}
+
+.starter-gen-header:hover { color: var(--white); }
+
+.starter-gen-arrow {
+  font-size: 6px;
+  color: var(--gray);
 }
 
 .starter-desc-box { text-align: center; }

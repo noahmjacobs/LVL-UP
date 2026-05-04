@@ -175,8 +175,8 @@ html, body {
 
 /* ── Pixel sprite glow ── */
 @keyframes spriteGlow {
-  0%, 100% { filter: drop-shadow(0 0 4px var(--green)) brightness(1); }
-  50%       { filter: drop-shadow(0 0 12px var(--green)) brightness(1.1); }
+  0%, 100% { filter: drop-shadow(0 0 4px var(--glow-color, var(--green))) brightness(1); }
+  50%       { filter: drop-shadow(0 0 12px var(--glow-color, var(--green))) brightness(1.1); }
 }
 .sprite-glow { animation: spriteGlow 2.5s ease-in-out infinite; }
 

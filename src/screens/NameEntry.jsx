@@ -17,7 +17,7 @@ export default function NameEntry() {
     <div className="name-screen">
       <div className="name-content fade-in">
         <p className="pixel name-prompt">What is your name,</p>
-        <p className="pixel name-prompt" style={{ color: 'var(--green)' }}>Trainer?</p>
+        <p className="pixel name-prompt" style={{ color: 'var(--white)' }}>Trainer?</p>
 
         <input
           className="pixel name-input"
@@ -33,7 +33,7 @@ export default function NameEntry() {
         />
 
         <p className="name-hint" style={{ fontSize: 11, color: 'var(--gray)' }}>
-          This name will identify your save. Choose wisely.
+          This name will identify your save.
         </p>
 
         <button

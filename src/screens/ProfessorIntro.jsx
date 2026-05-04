@@ -44,10 +44,10 @@ export default function ProfessorIntro() {
   return (
     <div className="prof-screen" onClick={advance}>
       <div className="prof-silhouette">
-        <div className="prof-body" />
+        <img src="/sprites/profoak.png" alt="Professor Oak" className="prof-body" draggable={false} />
       </div>
 
-      <div className="prof-textbox card card--green">
+      <div className="prof-textbox card">
         <p className="pixel prof-line">
           {displayed}
           {!done && <span className="blink">▌</span>}

@@ -10,3 +10,17 @@
 .poke-sprite--md  { width: 96px;  height: 96px; }
 .poke-sprite--lg  { width: 140px; height: 140px; }
 .poke-sprite--xl  { width: 200px; height: 200px; }
+
+.poke-sprite--md.poke-sprite--png {
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
+  image-rendering: auto;
+}
+
+.poke-sprite--lg.poke-sprite--png {
+  width: 144px;
+  height: 144px;
+  object-fit: contain;
+  image-rendering: auto;
+}

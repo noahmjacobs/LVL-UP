@@ -4,12 +4,12 @@ const CX = 160;
 const CY = 160;
 const R  = 120;
 const LABELS = [
-  { key: 'discipline', label: 'DISCIPLINE', icon: '🔒' },
-  { key: 'focus',      label: 'FOCUS',      icon: '🎯' },
-  { key: 'energy',     label: 'ENERGY',     icon: '⚡' },
-  { key: 'health',     label: 'HEALTH',     icon: '❤️' },
-  { key: 'habits',     label: 'HABITS',     icon: '✅' },
-  { key: 'consistency',label: 'CONSISTENCY',icon: '📅' },
+  { key: 'discipline', label: 'DISCIPLINE' },
+  { key: 'focus',      label: 'FOCUS'      },
+  { key: 'energy',     label: 'ENERGY'     },
+  { key: 'health',     label: 'HEALTH'     },
+  { key: 'habits',     label: 'HABITS'     },
+  { key: 'consistency',label: 'CONSISTENCY'},
 ];
 
 function pt(angle, r) {
@@ -50,12 +50,12 @@ export default function RadarChart({ stats }) {
           return <circle key={key} cx={x} cy={y} r="4" fill="var(--green)" />;
         })}
         {/* Labels */}
-        {LABELS.map(({ label, icon }, i) => {
+        {LABELS.map(({ label }, i) => {
           const [x, y] = pt(i * 60, R + 26);
           const anchor = x < CX - 5 ? 'end' : x > CX + 5 ? 'start' : 'middle';
           return (
             <text key={label} x={x} y={y} textAnchor={anchor} fill="#aaa" fontSize="7" fontFamily="'Press Start 2P', monospace">
-              {icon} {label}
+              {label}
             </text>
           );
         })}

@@ -40,7 +40,6 @@
   align-items: center;
   gap: 8px;
 }
-.stat-row__icon  { font-size: 16px; }
 .stat-row__label { font-size: 8px; flex: 1; }
 .stat-row__val   { font-size: 10px; }
 

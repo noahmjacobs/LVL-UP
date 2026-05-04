@@ -1,11 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import useGameStore from '../store/useGameStore';
+import { playTitleTheme } from '../audio';
 import './TitleScreen.css';
 
 export default function TitleScreen() {
   const { loginWithGoogle } = useGameStore();
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState('');
+
+  useEffect(() => { playTitleTheme(); }, []);
 
   const handleGoogle = async () => {
     if (loading) return;
@@ -27,7 +30,10 @@ export default function TitleScreen() {
           <img src="/sprites/pokeball.png"  className="title-pokeball title-pokeball--mid" alt="poke ball" />
           <img src="/sprites/ultraball.png" className="title-pokeball" alt="ultra ball" />
         </div>
-        <h1 className="pixel title-logo">LVL<br />UP</h1>
+        <h1 className="pixel title-logo">
+          <span style={{ color: 'var(--red)' }}>LVL</span><br />
+          <span style={{ color: 'var(--white)' }}>UP</span>
+        </h1>
         <p className="pixel title-sub">75 TUFF CHALLENGE</p>
       </div>
 

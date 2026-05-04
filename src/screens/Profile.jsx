@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import useGameStore from '../store/useGameStore';
 import PokemonSprite from '../components/PokemonSprite';
+import { getPokemonTypeColor } from '../constants/pokemonTypes';
 import './Profile.css';
 
 export default function Profile() {
@@ -13,6 +14,7 @@ export default function Profile() {
   const [editing, setEditing] = useState(false);
   const [nickDraft, setNickDraft] = useState(pokemonNickname || pokemonChoice || '');
   const pokemon = getCurrentPokemon();
+  const glowColor = getPokemonTypeColor(pokemon);
   const overallProgress = Math.round(
     (Object.values(stats).reduce((a, b) => a + b, 0) / (6 * 100)) * 100
   );
@@ -31,7 +33,7 @@ export default function Profile() {
             <p className="pixel" style={{ fontSize: 8, color: 'var(--gray)' }}>TRAINER</p>
             <h2 className="pixel profile-name">{trainerName}</h2>
           </div>
-          {pokemon && <PokemonSprite name={pokemon} size="md" glow />}
+          {pokemon && <PokemonSprite name={pokemon} size="md" glow glowColor={glowColor} />}
         </div>
 
         <hr className="px-divider" />
