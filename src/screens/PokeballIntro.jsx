@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import useGameStore from '../store/useGameStore';
+import { playTitleTheme } from '../audio';
 import './PokeballIntro.css';
 
 // Order: Ultra Ball → Great Ball → Poké Ball
@@ -25,6 +26,7 @@ export default function PokeballIntro() {
   const [flash, setFlash] = useState(false);
 
   useEffect(() => {
+    playTitleTheme(); // ensure music is playing through the intro
     const t1 = setTimeout(() => setPhase(1), BALL_INTERVAL);
     const t2 = setTimeout(() => setPhase(2), BALL_INTERVAL * 2);
     const t3 = setTimeout(() => setFlash(true), FLASH_START);

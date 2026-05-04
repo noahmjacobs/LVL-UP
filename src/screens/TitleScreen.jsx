@@ -10,12 +10,6 @@ export default function TitleScreen() {
 
   useEffect(() => {
     playTitleTheme();
-    const handleFirstInteraction = () => {
-      playTitleTheme();
-      document.removeEventListener('click', handleFirstInteraction);
-    };
-    document.addEventListener('click', handleFirstInteraction);
-    return () => document.removeEventListener('click', handleFirstInteraction);
   }, []);
 
   const handleGoogle = async () => {
