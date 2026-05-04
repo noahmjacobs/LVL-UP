@@ -277,3 +277,43 @@
 }
 
 .note-editor-save:hover { opacity: 0.85; }
+
+/* ── Previous challenges ──────────────────────────────────────── */
+.prev-challenges {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.prev-challenge-section {
+  background: #111;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.prev-challenge-header {
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 16px;
+  font-size: 7px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.prev-challenge-arrow {
+  font-size: 8px;
+  color: var(--gray);
+  flex-shrink: 0;
+}
+
+.prev-challenge-section .history-grid {
+  padding: 0 12px 12px;
+}

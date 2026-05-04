@@ -325,7 +325,7 @@ const useGameStore = create((set, get) => ({
       totalCompletedDays: totalCompleted,
       totalRestarts:      profile.totalRestarts || 0,
       longestStreak:      Math.max(profile.longestStreak || 0, recomputedStreak),
-      currentDay:         totalCompleted + 1,
+      currentDay:         (totalCompleted % 75) + 1,
       currentStreak:      recomputedStreak,
       isLockedIn:         false,
       waterOz:            0,
@@ -421,7 +421,7 @@ const useGameStore = create((set, get) => ({
     const newLineStats     = computeAllLineStats(newHistory, linesForStats);
     const newStats         = newLineStats[s.pokemonChoice] || defaultStats();
     const totalCompletedDays = newHistory.filter(h => h.completed).length;
-    const currentDay       = totalCompletedDays + 1;
+    const currentDay       = (totalCompletedDays % 75) + 1;
     const currentStreak    = computeStreak(newHistory);
     const longestStreak    = Math.max(s.longestStreak, currentStreak);
 
@@ -639,7 +639,7 @@ const useGameStore = create((set, get) => ({
     });
     // Reset challenge so evolutionStage:0 is persisted — prevents stale value on reload
     await saveChallenge(s.uid, {
-      currentDay: s.totalCompletedDays + 1,
+      currentDay: (s.totalCompletedDays % 75) + 1,
       currentStreak: s.currentStreak,
       isLockedIn: false, waterOz: 0,
       todayTasks: defaultTasks(),
