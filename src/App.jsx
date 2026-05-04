@@ -35,7 +35,7 @@ export default function App() {
   if (authLoading) {
     return (
       <div className="app-shell" style={{ alignItems: 'center', justifyContent: 'center' }}>
-        <p className="pixel" style={{ fontSize: 10, color: 'var(--green)' }}>
+        <p className="pixel" style={{ fontSize: 10, color: 'var(--white)' }}>
           LOADING<span className="blink">...</span>
         </p>
       </div>
