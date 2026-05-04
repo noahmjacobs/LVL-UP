@@ -56,6 +56,25 @@ export default function Profile() {
           <div>
             <p className="pixel" style={{ fontSize: 8, color: 'var(--gray)' }}>TRAINER</p>
             <h2 className="pixel profile-name">{trainerName}</h2>
+            {gymBadges.length > 0 && (
+              <div className="profile-badges-row">
+                {gymBadges.map((badge) => (
+                  <button
+                    key={badge.number}
+                    className="profile-badge-btn"
+                    onClick={() => setSelectedBadge(badge)}
+                    title={`Badge ${badge.number}`}
+                  >
+                    <img
+                      src={`/badges/badge${badge.number}.png`}
+                      onError={(e) => { e.target.src = '/badges/badge1.png'; }}
+                      alt={`Gym Badge ${badge.number}`}
+                      className="profile-badge-img"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           {pokemon && <PokemonSprite name={pokemon} size="md" glow glowColor={glowColor} />}
         </div>
@@ -88,26 +107,6 @@ export default function Profile() {
         <div className="profile-evo-tag pixel">
           EVO STAGE: {'★'.repeat(displayStage + 1)}{'☆'.repeat(2 - displayStage)}
         </div>
-
-        {gymBadges.length > 0 && (
-          <div className="profile-badges-row">
-            {gymBadges.map((badge) => (
-              <button
-                key={badge.number}
-                className="profile-badge-btn"
-                onClick={() => setSelectedBadge(badge)}
-                title={`Badge ${badge.number}`}
-              >
-                <img
-                  src={`/badges/badge${badge.number}.png`}
-                  onError={(e) => { e.target.src = '/badges/badge1.png'; }}
-                  alt={`Gym Badge ${badge.number}`}
-                  className="profile-badge-img"
-                />
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Stats grid */}
@@ -238,12 +237,6 @@ export default function Profile() {
               <span>{selectedBadge.startDate}</span>
               <span style={{ color: 'var(--gray)' }}> → </span>
               <span>{selectedBadge.endDate}</span>
-            </div>
-            <div className="badge-popup-pokemon">
-              <PokemonSprite name={selectedBadge.pokemonForm} size="md" bounce />
-              <p className="pixel" style={{ fontSize: 7, color: 'var(--yellow)', marginTop: 6 }}>
-                {(pokemonNicknames[selectedBadge.pokemonChoice] || selectedBadge.pokemonForm)?.toUpperCase()}
-              </p>
             </div>
             <button
               className="btn btn--full pixel"
