@@ -13,6 +13,7 @@ export default function Profile() {
     caughtLines, partnerLine, setPartnerLine,
     shinyLines, toggleShowShiny,
     canChooseNewPokemon, goToScreen,
+    gymBadges,
   } = useGameStore();
 
   // Derived display values — computed before hooks so they're available in deps/callbacks
@@ -33,6 +34,7 @@ export default function Profile() {
   const [editing, setEditing] = useState(false);
   const [nickDraft, setNickDraft] = useState('');
   const [showThemePicker, setShowThemePicker] = useState(false);
+  const [selectedBadge, setSelectedBadge] = useState(null);
 
   // Reset draft whenever the displayed line changes
   useEffect(() => {
@@ -86,6 +88,26 @@ export default function Profile() {
         <div className="profile-evo-tag pixel">
           EVO STAGE: {'★'.repeat(displayStage + 1)}{'☆'.repeat(2 - displayStage)}
         </div>
+
+        {gymBadges.length > 0 && (
+          <div className="profile-badges-row">
+            {gymBadges.map((badge) => (
+              <button
+                key={badge.number}
+                className="profile-badge-btn"
+                onClick={() => setSelectedBadge(badge)}
+                title={`Badge ${badge.number}`}
+              >
+                <img
+                  src={`/badges/badge${badge.number}.png`}
+                  onError={(e) => { e.target.src = '/badges/badge1.png'; }}
+                  alt={`Gym Badge ${badge.number}`}
+                  className="profile-badge-img"
+                />
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Stats grid */}
@@ -198,6 +220,41 @@ export default function Profile() {
       <button className="btn btn--red btn--full pixel" style={{ fontSize: 8 }} onClick={logout}>
         SIGN OUT
       </button>
+
+      {selectedBadge && (
+        <div className="badge-overlay" onClick={() => setSelectedBadge(null)}>
+          <div className="badge-popup card" onClick={(e) => e.stopPropagation()}>
+            <p className="pixel" style={{ fontSize: 7, color: 'var(--yellow)', marginBottom: 12, textAlign: 'center' }}>
+              ★ 75 HARD COMPLETE ★
+            </p>
+            <img
+              src={`/badges/badge${selectedBadge.number}.png`}
+              onError={(e) => { e.target.src = '/badges/badge1.png'; }}
+              alt={`Gym Badge ${selectedBadge.number}`}
+              className="badge-popup-img"
+            />
+            <p className="pixel badge-popup-num">BADGE #{selectedBadge.number}</p>
+            <div className="badge-popup-dates pixel">
+              <span>{selectedBadge.startDate}</span>
+              <span style={{ color: 'var(--gray)' }}> → </span>
+              <span>{selectedBadge.endDate}</span>
+            </div>
+            <div className="badge-popup-pokemon">
+              <PokemonSprite name={selectedBadge.pokemonForm} size="md" bounce />
+              <p className="pixel" style={{ fontSize: 7, color: 'var(--yellow)', marginTop: 6 }}>
+                {(pokemonNicknames[selectedBadge.pokemonChoice] || selectedBadge.pokemonForm)?.toUpperCase()}
+              </p>
+            </div>
+            <button
+              className="btn btn--full pixel"
+              style={{ fontSize: 7, marginTop: 14 }}
+              onClick={() => setSelectedBadge(null)}
+            >
+              CLOSE
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -210,3 +210,77 @@
   border-color: var(--green);
   color: var(--green);
 }
+
+/* ── Gym Badges ─────────────────────────────────────────────────── */
+.profile-badges-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.profile-badge-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+.profile-badge-btn:active { transform: scale(0.92); }
+
+.profile-badge-img {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 6px var(--accent, #FFD700));
+}
+
+/* Badge detail popup */
+.badge-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 24px;
+}
+
+.badge-popup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 24px 20px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.badge-popup-img {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 12px #FFD700);
+  margin: 8px 0;
+}
+
+.badge-popup-num {
+  font-size: 9px;
+  color: var(--yellow);
+  margin: 4px 0;
+}
+
+.badge-popup-dates {
+  font-size: 6px;
+  color: var(--white);
+  text-align: center;
+  line-height: 2;
+}
+
+.badge-popup-pokemon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 8px;
+}

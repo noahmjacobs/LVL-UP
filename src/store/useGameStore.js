@@ -160,6 +160,8 @@ const useGameStore = create((set, get) => ({
   // Per-line custom nicknames — preserved across partner switches
   pokemonNicknames:      {},     // { [choice]: string }
   canChooseNewPokemon:   false,  // true when evolutionStage === 2
+  // Gym badges — one per completed 75 Hard
+  gymBadges:             [],     // [{ number, startDate, endDate, pokemonChoice, pokemonForm, pokemonStage }]
 
   // ── History ──────────────────────────────────────────────────────────────
   history: [],
@@ -373,6 +375,7 @@ const useGameStore = create((set, get) => ({
         return nicks;
       })(),
       canChooseNewPokemon: profile.canChooseNewPokemon || false,
+      gymBadges:           profile.gymBadges || [],
     });
 
     // If nickname was out of sync, write the corrected value back to Firebase
@@ -456,10 +459,32 @@ const useGameStore = create((set, get) => ({
     // Also update per-line nicknames if the nickname auto-updated on evolution
     const newPokemonNicknames = { ...s.pokemonNicknames, [s.pokemonChoice]: pokemonNickname };
 
+    // Gym badge: award one for every 75 fully-completed days
+    const prevBadgeCount = Math.floor(s.totalCompletedDays / 75);
+    const newBadgeCount  = Math.floor(totalCompletedDays / 75);
+    let newGymBadges = s.gymBadges || [];
+    if (newBadgeCount > prevBadgeCount) {
+      const sortedCompleted = newHistory
+        .filter(h => h.completed)
+        .sort((a, b) => (a.date < b.date ? -1 : 1));
+      const badgeNum  = newBadgeCount;
+      const startDate = sortedCompleted[(badgeNum - 1) * 75]?.date;
+      const endDate   = sortedCompleted[badgeNum * 75 - 1]?.date;
+      newGymBadges = [...newGymBadges, {
+        number:        badgeNum,
+        startDate,
+        endDate,
+        pokemonChoice: s.pokemonChoice,
+        pokemonForm:   activePokemonName,
+        pokemonStage:  evolutionStage,
+      }];
+    }
+
     set({ history: newHistory, stats: newStats, lineStats: newLineStats, totalCompletedDays, currentDay,
           currentStreak, longestStreak, evolutionStage, showEvolutionCutscene,
           evolutionTarget, pokemonNickname, caughtLines: newCaughtLines,
-          shinyLines: newShinyLines, pokemonNicknames: newPokemonNicknames, canChooseNewPokemon });
+          shinyLines: newShinyLines, pokemonNicknames: newPokemonNicknames, canChooseNewPokemon,
+          gymBadges: newGymBadges });
 
     await saveHistoryEntry(s.uid, date, { tasks: newTasks, completed, partnerName: newEntry.partnerName });
     await saveChallenge(s.uid, {
@@ -471,7 +496,7 @@ const useGameStore = create((set, get) => ({
       pokemonNickname, totalCompletedDays,
       totalRestarts: s.totalRestarts, longestStreak, themeColor: s.themeColor,
       caughtLines: newCaughtLines, shinyLines: newShinyLines, pokemonNicknames: newPokemonNicknames,
-      canChooseNewPokemon,
+      canChooseNewPokemon, gymBadges: newGymBadges,
     });
   },
 
