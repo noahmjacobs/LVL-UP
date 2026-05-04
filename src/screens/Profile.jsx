@@ -15,18 +15,7 @@ export default function Profile() {
     canChooseNewPokemon, goToScreen,
   } = useGameStore();
 
-  const [editing, setEditing] = useState(false);
-  const [nickDraft, setNickDraft] = useState('');
-
-  // Reset draft whenever the displayed line changes
-  useEffect(() => {
-    setNickDraft(displayNickname || '');
-    setEditing(false);
-  }, [displayChoice]);
-  const [showThemePicker, setShowThemePicker] = useState(false);
-  const pokemon = getCurrentPokemon();
-
-  // Always key type color off the choice key (starter name), not the form name
+  // Derived display values — computed before hooks so they're available in deps/callbacks
   const displayChoice = partnerLine || pokemonChoice;
   const displayStage  = partnerLine !== null && caughtLines[partnerLine] !== undefined
     ? caughtLines[partnerLine]
@@ -37,10 +26,21 @@ export default function Profile() {
   const displayNickname = (() => {
     const stored = pokemonNicknames[displayChoice];
     if (stored) return stored;
-    // Fall back to form name from evolution line
     const stage = displayChoice === pokemonChoice ? displayStage : caughtLines[displayChoice] ?? 0;
     return EVOLUTION_LINES[displayChoice]?.[stage] || displayChoice;
   })();
+
+  const [editing, setEditing] = useState(false);
+  const [nickDraft, setNickDraft] = useState('');
+  const [showThemePicker, setShowThemePicker] = useState(false);
+
+  // Reset draft whenever the displayed line changes
+  useEffect(() => {
+    setNickDraft(displayNickname || '');
+    setEditing(false);
+  }, [displayChoice]);
+
+  const pokemon = getCurrentPokemon();
   const saveNick = () => {
     setPokemonNickname(nickDraft.trim() || displayChoice, displayChoice);
     setEditing(false);
