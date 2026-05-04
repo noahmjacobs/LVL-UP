@@ -38,8 +38,8 @@ Returns `0`, `1`, or `2` based on avg:
 ### `isStreakDay(entry)`
 Returns `true` if every task in `entry.tasks` is `true` or `'rest'` (no `false`).
 
-### `computeStatsFromHistory(history)`
-Rebuilds all 6 stats from scratch by iterating the full history array. Uses strict `=== true` checks — `'rest'` cells do NOT count. Called every time a cell is toggled so stats always reflect actual data.
+### `computeStatsFromHistory(history, startDate?)`
+Rebuilds all 6 stats from scratch by iterating the history array. Optional `startDate` (YYYY-MM-DD) skips any entries before that date — used to give each new Pokémon partner a fresh stat count. Uses strict `=== true` checks — `'rest'` cells do NOT count.
 
 ### `computeStreak(history)`
 Counts consecutive streak days backward from today. A day is in the streak if `isStreakDay` returns true.
@@ -68,8 +68,8 @@ Returns `{ discipline: 0, focus: 0, energy: 0, health: 0, habits: 0, consistency
 |-------|------|-------------|
 | `isOnboarded` | `boolean` | Whether user completed onboarding |
 | `trainerName` | `string` | Chosen trainer name |
-| `pokemonChoice` | `string\|null` | The base form key (e.g. `'charmander'`) — the CURRENT active line |
-| `pokemonNickname` | `string` | Display name for partner, may differ from form name if renamed |
+| `pokemonChoice` | `string\|null` | The base form key of the CURRENT active line (e.g. `'charmander'`) |
+| `pokemonNickname` | `string` | Display name for the active partner (kept in sync with `pokemonNicknames[pokemonChoice]`) |
 
 ### Navigation
 | Field | Type | Values |
@@ -113,8 +113,8 @@ Returns `{ discipline: 0, focus: 0, energy: 0, health: 0, habits: 0, consistency
 | `caughtLines` | `object` | `{ [pokemonChoice]: highestStage }` — one key per caught LINE |
 | `partnerLine` | `string\|null` | Which non-active caught line to display; `null` = active line |
 | `partnerSince` | `string\|null` | YYYY-MM-DD when current `pokemonChoice` was adopted. Stats only count from this date forward. |
-| `shinyUnlocked` | `boolean` | Whether shiny is unlocked (avg ≥ 150 at final evo) |
-| `showShiny` | `boolean` | User toggle for shiny display |
+| `shinyLines` | `object` | `{ [choice]: { unlocked: bool, show: bool } }` — per-line shiny state, preserved across partner switches |
+| `pokemonNicknames` | `object` | `{ [choice]: string }` — per-line custom nickname, preserved across partner switches |
 | `canChooseNewPokemon` | `boolean` | True when `evolutionStage === 2` |
 
 ### History
@@ -139,8 +139,11 @@ Signs out of Firebase, resets all store state to defaults, goes to `'title'`.
 
 ### Onboarding Actions
 
-#### `setTrainerName(name)` / `setPokemonChoice(choice)` / `setPokemonNickname(name)`
+#### `setTrainerName(name)` / `setPokemonChoice(choice)`
 Simple setters used during onboarding screens.
+
+#### `setPokemonNickname(name)` (async)
+Updates `pokemonNickname` and `pokemonNicknames[pokemonChoice]` in state. Persists both `pokemonNickname` and `pokemonNicknames` to Firebase via `updateProfileField`.
 
 #### `goToScreen(screen)`
 Simple setter: `set({ currentScreen: screen })`.
@@ -153,7 +156,11 @@ Sets `isOnboarded: true`, saves profile + challenge to Firebase, inits `caughtLi
 #### `loadSavedUser(uid)`
 Called after auth resolves. Reads all Firebase data, **recomputes stats and streak from scratch**, applies theme, migrates old `caughtPokemon` array → `caughtLines` dict if needed. Returns `true` if data exists, `false` if new user.
 
-Also **syncs the nickname to the current evolution stage** on load: if `pokemonNickname` is still a default name (matches any form in the evolution line via `isDefaultNickname`), it updates it to the name of the current evolved form. This fixes the case where a Pokémon evolved between sessions and the nickname was never updated. If the corrected nickname differs from the saved one, it's written back to Firebase immediately via `updateProfileField`.
+**Shiny migration:** If `profile.shinyLines` doesn't exist yet (old data), reads legacy `profile.shinyUnlocked` and `profile.showShiny` and synthesizes `shinyLines: { [pokemonChoice]: { unlocked, show } }`.
+
+**Nickname migration:** If `profile.pokemonNicknames` doesn't exist yet (old data), seeds `pokemonNicknames: { [pokemonChoice]: resolvedNickname }` and writes it back to Firebase.
+
+Also **syncs the nickname to the current evolution stage** on load: if `pokemonNickname` is still a default name (matches any form in the evolution line via `isDefaultNickname`), it updates it to the name of the current evolved form and writes back to Firebase.
 
 ### Core Toggle
 
@@ -164,12 +171,12 @@ Toggles a cell in the habit grid. Three-state cycle: `false → true → 'rest' 
 2. Compute new tasks object
 3. Set `completed` (all tasks `=== true`)
 4. Set `partnerName` from current active Pokémon (only on first log)
-5. Recompute stats from full history via `computeStatsFromHistory`
+5. Recompute stats from history via `computeStatsFromHistory(newHistory, partnerSince)`
 6. Recompute streak, `totalCompletedDays`, `currentDay`
 7. Compute evolution stage; trigger cutscene if evolved
-8. Update `caughtLines`, `shinyUnlocked`, `canChooseNewPokemon`
-9. Update nickname if still default and evolved
-10. Persist to Firebase: history entry + challenge + profile
+8. Update `caughtLines` and per-line shiny state in `shinyLines[pokemonChoice]`
+9. Update `pokemonNicknames[pokemonChoice]` if nickname auto-updated on evolution
+10. Persist to Firebase: history entry + challenge + profile (including `shinyLines`, `pokemonNicknames`)
 
 ### Appearance
 
@@ -182,19 +189,19 @@ Updates `themeColor`, calls `applyTheme(id)` to update CSS vars, saves to Fireba
 ### Pokémon Actions
 
 #### `choosePokemon(choice)` (only if `canChooseNewPokemon`)
-Picks a new starter after reaching final evo. Resets `evolutionStage: 0`, `shinyUnlocked: false`, `showShiny: false`, `partnerLine: null`. Adds the new line to `caughtLines`.
+Picks a new starter after reaching final evo. Guards against re-selecting any line already in `caughtLines`. Resets `evolutionStage: 0`, `stats: defaultStats()`, `partnerLine: null`. Sets `partnerSince: today`. Adds the new line to `caughtLines` at stage 0. **Preserves `shinyLines` for all previously caught lines** (only adds `{ [choice]: { unlocked: false, show: false } }` for the new line). Saves full profile to Firebase.
 
 #### `setPartnerLine(choice | null)`
-Switch display partner. `null` = back to active line.
+Switch display partner. `null` = back to active line. Saves to Firebase.
 
-#### `toggleShowShiny()`
-Toggle `showShiny` if `shinyUnlocked`. Saved to Firebase.
+#### `toggleShowShiny(choice)` (async)
+Toggles `shinyLines[choice].show` for the specified line (if that line has `unlocked: true`). Updates `shinyLines` in state and saves the full `shinyLines` map to Firebase via `updateProfileField`.
 
 #### `getCurrentPokemon()` — Computed getter
 Returns the sprite name to display. Priority:
-1. If `partnerLine !== null` → use that line at its highest stage
+1. If `partnerLine !== null` → use that line at its highest stage from `caughtLines`
 2. Otherwise → use `pokemonChoice` at `evolutionStage`
-3. If `showShiny && shinyUnlocked` → prefix with `shiny`
+3. If `shinyLines[choice].unlocked && shinyLines[choice].show` → prefix with `shiny`
 
 ### Notes
 

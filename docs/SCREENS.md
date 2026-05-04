@@ -52,6 +52,8 @@ Fixed label column (`.tracker-labels-col`) is outside the scroll container so it
 - `toggleHistoryTask(date, key)` — called on cell click
 - `habitColors` + `setHabitColor` — per-habit custom colors
 - `getCurrentPokemon()` — which sprite to show in header
+- `pokemonChoice` + `partnerLine` — to compute `displayChoice = partnerLine || pokemonChoice`
+- `typeColor = getPokemonTypeColor(displayChoice)` — passed as `glowColor` to `<PokemonSprite>`
 
 ### Cell Rendering Logic
 ```js
@@ -62,6 +64,10 @@ cellState = historyMap[date]?.[key] ?? false  // false | true | 'rest'
 // 'rest' → diagonal gradient (half color, half dark)
 ```
 Clicking a cell in edit mode does nothing (edit mode is for color picking only).
+
+### Sprite
+`<PokemonSprite name={pokemon} size="md" glow bounce glowColor={typeColor} />`  
+Type-color glow is applied. Shiny is handled automatically by `getCurrentPokemon()` returning `shiny${name}` when active.
 
 ### Edit Mode
 - Toggle via ✏ button in the corner cell (`.tracker-corner`)
@@ -87,7 +93,7 @@ Clicking a cell in edit mode does nothing (edit mode is for color picking only).
 **Pokémon-style stat overview.**
 
 ### Displays
-- Pokémon sprite centered at top (`size="lg"`), glow color = type color, with nickname below
+- Pokémon sprite centered at top (`size="lg"`, no glow, bounce only), nickname below
 - Radar chart (spider chart) — interior and stroke colored by Pokémon type
 - List of 6 stat rows, each with: label, value `/252`, progress bar, description
 
@@ -98,8 +104,8 @@ No day counter or progress bar — those belong on the History screen.
 Fire=#FF6B35, Water=#4488FF, Grass=#48D050. Passed to `<RadarChart>` and stat bar fills/values.
 
 ### Nickname
-When `partnerLine` is active: shows the partner's current form name (e.g. `'empoleon'`).  
-When no partner: shows `pokemonNickname || pokemonChoice` (the custom name or starter name).
+Uses `pokemonNicknames[displayChoice]`, falling back to the form name from `EVOLUTION_LINES`, then the choice key.  
+`displayChoice = partnerLine || pokemonChoice`
 
 ### STAT_INFO
 ```js
@@ -116,12 +122,17 @@ When no partner: shows `pokemonNickname || pokemonChoice` (the custom name or st
 ### Layout
 ```
 CHALLENGE LOG header
-Challenge progress bar (X% COMPLETE — totalCompletedDays / 75)
+Challenge progress bar (X% COMPLETE)
 Legend (green=complete, red=fail, gray=future)
 10-column calendar grid (75 tiles)
 Day detail card (shown when tile clicked)
 Note editor modal (shown when editing a note)
 ```
+
+### Progress Bar
+- `completedThisRun` = history entries where `h.completed === true` AND `h.date >= partnerSince` (or all-time if `partnerSince` is null)
+- `progressPct = Math.min(100, Math.round((completedThisRun / 75) * 100))`
+- Only fully completed days (all 6 tasks `=== true`) count — partial/rest days do not
 
 ### Calendar Grid
 - 75 tiles representing Days 1–75
@@ -177,13 +188,13 @@ notePopup    // taskKey whose info popup is shown | null
 ### Sections
 
 #### Trainer Card
-- Trainer name + current Pokémon sprite (glow = type color)
-- Partner nickname + RENAME/SAVE button (editable inline)
-- Evolution stage stars: `★★☆` etc.
+- Trainer name + current Pokémon sprite (glow = type color from `getPokemonTypeColor(displayChoice)`)
+- Partner nickname (`pokemonNicknames[displayChoice]` with form-name fallback) + RENAME/SAVE button
+- Evolution stage stars: `★★☆` etc. based on `displayStage`
+- RENAME button is hidden when `partnerLine !== null` (can only rename your active Pokémon)
 
 #### Stats Grid (2-column)
-3 tiles: CURRENT DAY, STREAK, BEST STREAK  
-(EVO STAGE is shown in the trainer card above; AVG STATS and DAYS COMPLETED removed)
+2 tiles: **CURRENT DAY**, **STREAK**
 
 #### Pokédex (`caughtLines`)
 - Renders `Object.entries(caughtLines).map(([choice, stage]) => ...)`
@@ -193,16 +204,26 @@ notePopup    // taskKey whose info popup is shown | null
   - Clicking the active line (`pokemonChoice`): clears `partnerLine` (returns to active display)
 - Currently displayed entry highlighted with `.pokedex-entry--active` (green border)
 - `isDisplayed = (partnerLine === choice) || (!partnerLine && isCurrentLine)`
-- **Shiny star button:** appears on current-line final-form entry if `shinyUnlocked`
+- **Shiny star button:** appears on **any** caught final-form (`stage === 2`) where `shinyLines[choice]?.unlocked === true`
   - `☆` when off, `★` (gold glow) when on
-  - `onClick` → `toggleShowShiny()`
+  - `onClick` → `toggleShowShiny(choice)` — passes the specific line's choice key
+  - This means you can toggle shiny on old partner lines (e.g. emboar) even while a different Pokémon (e.g. piplup) is your active partner
 
-#### Trainer card nickname + evo stage
-- `displayChoice = partnerLine || pokemonChoice`
-- `displayStage = partnerLine set ? caughtLines[partnerLine] : evolutionStage`
-- Nickname: partner's form name when partnerLine active, else `pokemonNickname`
-- RENAME button hidden when a partner is displayed (can only rename your active Pokémon)
-- Evo stage stars use `displayStage`
+#### `displayChoice` / `displayStage`
+```js
+const displayChoice = partnerLine || pokemonChoice;
+const displayStage  = partnerLine !== null && caughtLines[partnerLine] !== undefined
+  ? caughtLines[partnerLine]
+  : evolutionStage;
+```
+
+#### Nickname display
+```js
+const displayNickname = pokemonNicknames[displayChoice]
+  || EVOLUTION_LINES[displayChoice]?.[displayStage]
+  || displayChoice;
+```
+Reads from the per-line `pokemonNicknames` map so both the active Pokémon's custom name and any old partner's custom name are shown correctly.
 
 #### Choose New Partner Button
 Only shown if `canChooseNewPokemon`. Routes to `'chooseNewPokemon'` screen.
@@ -226,7 +247,7 @@ Shown when `currentScreen === 'restart'`. Sad animation, challenge restart confi
 
 ## ChooseNewPokemon.jsx
 
-Available when `evolutionStage === 2`. Full-screen starter picker showing all 27 starters (9 gens × 3 types). Current pokemonChoice is shown dimmed/disabled. Selecting a new one calls `choosePokemon(choice)`.
+Available when `evolutionStage === 2`. Full-screen starter picker showing all 27 starters (9 gens × 3 types). Checks `caughtLines[choice] !== undefined` — any previously caught line is dimmed with a "CAUGHT" badge and is not selectable. Selecting a new one calls `choosePokemon(choice)`.
 
 ---
 

@@ -41,14 +41,15 @@ Toggle cycle: `false → true → 'rest' → false`
 - **6 stats:** `discipline`, `focus`, `energy`, `health`, `habits`, `consistency`
 - **Max value:** 252 (STAT_MAX) — Pokémon EV cap reference
 - **Increment:** +5 per qualifying day (STAT_INCREMENT)
-- **Derived:** Stats are **recomputed from scratch** every time `toggleHistoryTask` runs via `computeStatsFromHistory(history)`. They are NOT stored cumulatively.
+- **Derived:** Stats are **recomputed from scratch** every time `toggleHistoryTask` runs via `computeStatsFromHistory(history, partnerSince)`. They are NOT stored cumulatively.
+- **`partnerSince` filter:** Only history entries on or after this date are counted. This gives each new Pokémon partner a fresh stat slate starting at 0.
 
 ### Thresholds for Evolution
 
 ```
 avg ≥ 50  → Evolution Stage 1 (mid form)
 avg ≥ 100 → Evolution Stage 2 (final form)
-avg ≥ 150 → Shiny unlocked (at final evo only)
+avg ≥ 150 → Shiny unlocked for that line (at final evo only)
 ```
 
 `computeAvgStats(stats)` = sum of all 6 / 6
@@ -85,7 +86,7 @@ const isStreakDay = (entry) =>
 
 ### Stat-based (main mechanic)
 Evolution is triggered inside `toggleHistoryTask` every time a cell is toggled:
-1. Recompute stats from full history
+1. Recompute stats from history (filtered by `partnerSince`)
 2. Compute `computedEvStage` from avg
 3. `evolutionStage = Math.max(s.evolutionStage, computedEvStage)`
 4. If stage increased → show evolution cutscene, update nickname if it's still a default
@@ -94,7 +95,7 @@ Evolution is triggered inside `toggleHistoryTask` every time a cell is toggled:
 Still present for compatibility: evolves at Day 25 → stage 1, Day 50 → stage 2. This path is only triggered if user uses "Lock In" flow.
 
 ### Nickname auto-update on evolution
-`isDefaultNickname(nickname, pokemonChoice)` returns `true` if the nickname matches ANY form name in the evolution line (case-insensitive). If true, nickname auto-updates to the new evolved form name.
+`isDefaultNickname(nickname, pokemonChoice)` returns `true` if the nickname matches ANY form name in the evolution line (case-insensitive). If true, nickname auto-updates to the new evolved form name and is saved to both `pokemonNickname` and `pokemonNicknames[pokemonChoice]`.
 
 ---
 
@@ -107,21 +108,35 @@ Still present for compatibility: evolves at Day 25 → stage 1, Day 50 → stage
 
 ### Choosing a New Pokémon
 Available when `evolutionStage === 2` (`canChooseNewPokemon = true`).  
-`choosePokemon(choice)` resets `evolutionStage` to 0, adds the new line to `caughtLines` at stage 0, resets `shinyUnlocked`/`showShiny`.
+`choosePokemon(choice)` resets `evolutionStage` to 0, stats to 0, adds the new line to `caughtLines` at stage 0, sets `partnerSince` to today.
 
 **Blocked if the line is already in `caughtLines`** — each line can only be caught once, ever. The UI shows already-caught lines as dimmed with a "CAUGHT" badge.
 
-**`partnerSince`** — set to today's date when `choosePokemon` is called. `computeStatsFromHistory` filters out any history entries before this date, so the new Pokémon's stats start at 0 and only accumulate from new task completions.
+**Shiny state is preserved per line** — `shinyLines` is NOT reset when choosing a new Pokémon. The old line keeps its `{ unlocked, show }` flags intact. Only the new line gets initialized to `{ unlocked: false, show: false }`.
+
+**`partnerSince`** — set to today's date when `choosePokemon` is called. `computeStatsFromHistory` filters out any history entries before this date.
+
+---
+
+## Per-Line Nickname System
+
+- `pokemonNicknames: { [choice]: string }` — custom nickname for each caught evolution line
+- Persisted to Firebase; preserved when choosing a new partner
+- `setPokemonNickname(name)` updates both `pokemonNickname` (active-line compat field) and `pokemonNicknames[pokemonChoice]`
+- Profile.jsx reads `pokemonNicknames[displayChoice]` to show the correct nickname for whichever line is displayed, falling back to the form name
 
 ---
 
 ## Shiny System
 
-- Unlocks when `evolutionStage === 2` AND `avgStats >= 150`
-- `shinyUnlocked` flag saved to Firebase profile
-- `showShiny` is a user toggle (☆ star in Pokédex entry for the current final-form)
-- When shiny is active, `getCurrentPokemon()` returns `shiny${baseName}` (e.g. `shinyChaizard`)
-- Sprite files: `public/sprites/shiny{Name}.gif` (currently only Gen 1 starters have shiny sprites)
+- Shiny unlocks **per evolution line** when that line reaches `evolutionStage === 2` AND `avgStats >= 150`
+- State is stored in `shinyLines: { [choice]: { unlocked: bool, show: bool } }`
+  - `unlocked`: permanently `true` once threshold is reached for that line — never resets
+  - `show`: user toggle, controls whether the shiny sprite is rendered
+- `toggleShowShiny(choice)` flips `shinyLines[choice].show` for the specified line
+- The ☆/★ star button appears on **any** Pokédex entry at `stage === 2` where `shinyLines[choice].unlocked === true` — including non-active partner lines
+- `getCurrentPokemon()` returns `shiny${baseName}` when `shinyLines[displayChoice].unlocked && shinyLines[displayChoice].show`
+- Sprite files: `public/sprites/shiny{Name}.gif` — most Gen 1–5 final forms have shiny sprites
 
 ---
 
@@ -132,7 +147,7 @@ Available when `evolutionStage === 2` (`canChooseNewPokemon = true`).
   date: 'YYYY-MM-DD',
   tasks: { diet: true|false|'rest', workout1, workout2, water, read, photo },
   completed: boolean,       // all tasks === true
-  partnerName: 'charizard', // which Pokémon form was active on first log of this day
+  partnerName: 'charizard', // which Pokémon form was active when first logged
   notes: {                  // optional per-task notes
     diet: 'Had chicken and rice',
     read: 'Finished chapter 3',

@@ -29,20 +29,21 @@ users/
   {uid}/
     profile/
       trainerName          string
-      pokemonChoice        string   ('charmander', 'squirtle', etc.)
-      pokemonNickname      string
+      pokemonChoice        string        ('charmander', 'squirtle', etc.)
+      pokemonNickname      string        (active-line nickname, kept in sync)
+      pokemonNicknames     object        ({ [choice]: string } — per-line nicknames)
       totalCompletedDays   number
       totalRestarts        number
       longestStreak        number
-      themeColor           string   (theme id, e.g. 'green')
-      habitColors          object   ({ diet, workout1, workout2, read, photo, water } hex strings)
-      caughtLines          object   ({ [pokemonChoice]: highestStage })
+      themeColor           string        (theme id, e.g. 'green')
+      habitColors          object        ({ diet, workout1, workout2, read, photo, water } hex strings)
+      caughtLines          object        ({ [pokemonChoice]: highestStage })
       partnerLine          string|null
-      shinyUnlocked        boolean
-      showShiny            boolean
+      partnerSince         string|null   (YYYY-MM-DD)
+      shinyLines           object        ({ [choice]: { unlocked: bool, show: bool } })
       canChooseNewPokemon  boolean
 
-    challenge/             (legacy — written by lockInDay, not main flow anymore)
+    challenge/             (legacy — written by lockInDay, also written by toggleHistoryTask)
       currentDay           number
       currentStreak        number
       isLockedIn           boolean
@@ -65,16 +66,18 @@ users/
 
 **Key design:** Stats and streak are NOT stored. They are always **recomputed from `history/`** on load and on every toggle. This prevents drift.
 
+**Legacy fields:** `shinyUnlocked` and `showShiny` may still exist in old profiles — `loadSavedUser` migrates them to `shinyLines` automatically on first load and writes the new format back.
+
 ---
 
 ## Helper Functions
 
-All keyed by Firebase UID (no trainer name in the path anymore — uses real UID from auth).
+All keyed by Firebase UID.
 
 ```js
 userRef(uid, path)                   // Returns a DB ref at users/{uid}/{path}
 saveProfile(uid, data)               // set() the full profile object
-updateProfileField(uid, field, value)// update() a single profile field (used for themeColor, habitColors, partnerLine, showShiny)
+updateProfileField(uid, field, value)// update() a single profile field
 saveChallenge(uid, data)             // set() the full challenge object
 saveHistoryEntry(uid, date, data)    // set() at history/{date}
 loadUser(uid)                        // get() users/{uid}, returns null if not found
@@ -85,15 +88,16 @@ loadUser(uid)                        // get() users/{uid}, returns null if not f
 | Action | Firebase writes |
 |--------|----------------|
 | `completeOnboarding` | `saveProfile` + `saveChallenge` |
-| `toggleHistoryTask` | `saveHistoryEntry` + `saveChallenge` + `saveProfile` |
+| `toggleHistoryTask` | `saveHistoryEntry` + `saveChallenge` + `saveProfile` (includes `shinyLines`, `pokemonNicknames`) |
 | `setHabitColor` | `updateProfileField('habitColors', ...)` |
 | `setThemeColor` | `updateProfileField('themeColor', ...)` |
 | `setPartnerLine` | `updateProfileField('partnerLine', ...)` |
-| `toggleShowShiny` | `updateProfileField('showShiny', ...)` |
+| `toggleShowShiny` | `updateProfileField('shinyLines', ...)` |
+| `setPokemonNickname` | `updateProfileField('pokemonNickname', ...)` + `updateProfileField('pokemonNicknames', ...)` |
 | `setHistoryNote` | `saveHistoryEntry` (with notes merged) |
 | `lockInDay` | `saveHistoryEntry` + `saveProfile` + `saveChallenge` |
 | `confirmRestart` | `saveProfile` + `saveChallenge` |
-| `choosePokemon` | `saveProfile` |
+| `choosePokemon` | `saveProfile` (includes `shinyLines`, `pokemonNicknames`) |
 | `logout` | none (just Firebase signOut) |
 
 ---
