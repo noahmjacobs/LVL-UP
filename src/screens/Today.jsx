@@ -10,7 +10,7 @@ const DAY_ABBR = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
 const HABITS = [
   { key: 'diet',     label: 'DIET',      color: '#FF8C00' },
   { key: 'workout1', label: 'WORKOUT 1', color: '#39FF14' },
-  { key: 'workout2', label: 'WORKOUT 2', color: '#00E5FF' },
+  { key: 'workout2', label: ['OUTDOOR', 'WORKOUT'], color: '#00E5FF' },
   { key: 'read',     label: 'READ',      color: '#FFD700' },
   { key: 'photo',    label: 'PHOTO',     color: '#BB44FF' },
   { key: 'water',    label: 'WATER',     color: '#4488FF' },
@@ -100,7 +100,11 @@ export default function Today() {
         <div className="tracker-labels-col">
           <div className="tracker-corner" />
           {HABITS.map(({ key, label }) => (
-            <div key={key} className="tracker-label-item pixel">{label}</div>
+            <div key={key} className="tracker-label-item pixel">
+              {Array.isArray(label)
+                ? label.map((line, i) => <span key={i} style={{ display: 'block' }}>{line}</span>)
+                : label}
+            </div>
           ))}
         </div>
 
