@@ -51,8 +51,9 @@ export default function RadarChart({ stats, typeColor }) {
         {LABELS.map(({ label }, i) => {
           const [x, y] = pt(i * 60, R + 26);
           const anchor = x < CX - 5 ? 'end' : x > CX + 5 ? 'start' : 'middle';
+          const xOffset = label === 'CONSISTENCY' ? 5 : 0;
           return (
-            <text key={label} x={x} y={y} textAnchor={anchor} fill="#aaa" fontSize="7" fontFamily="'Press Start 2P', monospace">
+            <text key={label} x={x + xOffset} y={y} textAnchor={anchor} fill="#aaa" fontSize="7" fontFamily="'Press Start 2P', monospace">
               {label}
             </text>
           );
