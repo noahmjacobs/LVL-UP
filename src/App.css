@@ -57,6 +57,13 @@ html, body {
   padding-bottom: 0;
 }
 
+/* Extra bottom clearance in PWA so content clears the taller navbar */
+@media (display-mode: standalone) {
+  .screen {
+    padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px);
+  }
+}
+
 /* ── Typography ── */
 .pixel { font-family: var(--font-pixel); }
 

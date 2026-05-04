@@ -35,7 +35,7 @@ export default function RadarChart({ stats, typeColor }) {
 
   return (
     <div className="radar-wrap">
-      <svg viewBox="0 0 320 320" className="radar-svg">
+      <svg viewBox="-45 -5 410 330" className="radar-svg">
         {/* Grid rings */}
         {[0.25, 0.5, 0.75, 1].map((scale) => (
           <path key={scale} d={hexPath(R * scale)} fill="none" stroke="#222" strokeWidth="1" />
