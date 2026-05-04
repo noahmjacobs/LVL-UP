@@ -2,6 +2,7 @@ import { useState } from 'react';
 import useGameStore from '../store/useGameStore';
 import PokemonSprite from '../components/PokemonSprite';
 import { getPokemonTypeColor } from '../constants/pokemonTypes';
+import { THEMES } from '../constants/themes';
 import './Profile.css';
 
 export default function Profile() {
@@ -9,6 +10,7 @@ export default function Profile() {
     trainerName, pokemonChoice, pokemonNickname, setPokemonNickname,
     currentDay, currentStreak, totalCompletedDays, totalRestarts,
     longestStreak, stats, getCurrentPokemon, evolutionStage, logout,
+    themeColor, setThemeColor,
   } = useGameStore();
 
   const [editing, setEditing] = useState(false);
@@ -87,6 +89,22 @@ export default function Profile() {
         <p className="pixel" style={{ fontSize: 8, color: 'var(--gray)', textAlign: 'center', lineHeight: 2 }}>
           "It does not matter how slowly you go,<br />as long as you do not stop."
         </p>
+      </div>
+
+      {/* Theme picker */}
+      <div className="card profile-theme-card">
+        <p className="pixel" style={{ fontSize: 8, color: 'var(--gray)', marginBottom: 12 }}>ACCENT COLOR</p>
+        <div className="profile-theme-grid">
+          {THEMES.map((t) => (
+            <button
+              key={t.id}
+              className={`profile-theme-swatch${themeColor === t.id ? ' profile-theme-swatch--active' : ''}`}
+              style={{ background: t.accent }}
+              onClick={() => setThemeColor(t.id)}
+              title={t.label}
+            />
+          ))}
+        </div>
       </div>
 
       <button className="btn btn--red btn--full pixel" style={{ fontSize: 8 }} onClick={logout}>

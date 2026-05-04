@@ -57,3 +57,27 @@
 .profile-stat-label { font-size: 7px; color: var(--gray); line-height: 1.6; }
 
 .profile-footer { padding: 16px; }
+
+.profile-theme-card { padding: 14px 14px 16px; }
+
+.profile-theme-grid {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 8px;
+}
+
+.profile-theme-swatch {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s;
+}
+
+.profile-theme-swatch:hover { transform: scale(1.15); }
+
+.profile-theme-swatch--active {
+  border-color: var(--white);
+  transform: scale(1.15);
+}

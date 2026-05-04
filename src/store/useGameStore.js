@@ -1,8 +1,9 @@
 import { create } from 'zustand';
 import {
   signInWithGoogle, signInWithApple, signOut,
-  saveProfile, saveChallenge, saveHistoryEntry, loadUser,
+  saveProfile, saveChallenge, saveHistoryEntry, loadUser, updateProfileField,
 } from '../firebase';
+import { applyTheme, DEFAULT_THEME } from '../constants/themes';
 
 const STAT_INCREMENT = 1.35;
 
@@ -78,6 +79,9 @@ const useGameStore = create((set, get) => ({
   // ── Stats ────────────────────────────────────────────────────────────────
   stats: defaultStats(),
 
+  // ── Theme ────────────────────────────────────────────────────────────────
+  themeColor: DEFAULT_THEME,
+
   // ── Pokémon ──────────────────────────────────────────────────────────────
   evolutionStage:        0,
   showEvolutionCutscene: false,
@@ -123,15 +127,23 @@ const useGameStore = create((set, get) => ({
 
   logout: async () => {
     await signOut();
+    applyTheme(DEFAULT_THEME);
     set({
       uid: null, isOnboarded: false, trainerName: '',
       pokemonChoice: null, pokemonNickname: '',
-      currentScreen: 'title',
+      currentScreen: 'title', themeColor: DEFAULT_THEME,
       currentDay: 1, currentStreak: 1, totalCompletedDays: 0,
       totalRestarts: 0, longestStreak: 0, lastLockDate: null,
       todayTasks: defaultTasks(), waterOz: 0, isLockedIn: false,
       stats: defaultStats(), evolutionStage: 0, history: [],
     });
+  },
+
+  setThemeColor: async (id) => {
+    const { uid } = get();
+    set({ themeColor: id });
+    applyTheme(id);
+    if (uid) await updateProfileField(uid, 'themeColor', id);
   },
 
   // ── Onboarding actions ────────────────────────────────────────────────────
@@ -176,11 +188,15 @@ const useGameStore = create((set, get) => ({
     const today = todayDate();
     const alreadyLockedToday = challenge?.lastLockDate === today;
 
+    const savedTheme = profile.themeColor || DEFAULT_THEME;
+    applyTheme(savedTheme);
+
     set({
       isOnboarded:        true,
       trainerName:        profile.trainerName,
       pokemonChoice:      profile.pokemonChoice,
       pokemonNickname:    profile.pokemonNickname,
+      themeColor:         savedTheme,
       totalCompletedDays: profile.totalCompletedDays || 0,
       totalRestarts:      profile.totalRestarts      || 0,
       longestStreak:      profile.longestStreak      || 0,

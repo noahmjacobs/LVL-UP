@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getDatabase, ref, set, get } from 'firebase/database';
+import { getDatabase, ref, set, get, update } from 'firebase/database';
 import {
   getAuth,
   signInWithPopup,
@@ -52,6 +52,10 @@ export function userRef(uid, path = '') {
 
 export async function saveProfile(uid, data) {
   await set(userRef(uid, 'profile'), data);
+}
+
+export async function updateProfileField(uid, field, value) {
+  await update(userRef(uid, 'profile'), { [field]: value });
 }
 
 export async function saveChallenge(uid, data) {

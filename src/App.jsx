@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import useGameStore from './store/useGameStore';
 import { auth, onAuthStateChanged } from './firebase';
+import { applyTheme } from './constants/themes';
 
 import TitleScreen      from './screens/TitleScreen';
 import ProfessorIntro   from './screens/ProfessorIntro';
@@ -17,7 +18,9 @@ import EvolutionCutscene from './components/EvolutionCutscene';
 const ONBOARDING = ['professor', 'nameEntry', 'starterSelect'];
 
 export default function App() {
-  const { currentScreen, authLoading, handleAuthResolved, showEvolutionCutscene } = useGameStore();
+  const { currentScreen, authLoading, handleAuthResolved, showEvolutionCutscene, themeColor } = useGameStore();
+
+  useEffect(() => { applyTheme(themeColor); }, [themeColor]);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
