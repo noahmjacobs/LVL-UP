@@ -7,11 +7,11 @@ import { fadeOutTitleTheme } from '../audio';
 import './Today.css';
 
 const TASKS = [
-  { key: 'diet',     icon: '🥗', title: 'DIET',          subtitle: 'No alcohol, no cheat meals' },
-  { key: 'workout1', icon: '💪', title: 'WORKOUT 1',      subtitle: '45 min — any location' },
-  { key: 'workout2', icon: '🌿', title: 'WORKOUT 2',      subtitle: '45 min — outdoors' },
-  { key: 'read',     icon: '📖', title: 'READ 10 PAGES',  subtitle: 'Non-fiction only, no audiobooks' },
-  { key: 'photo',    icon: '📸', title: 'PROGRESS PHOTO', subtitle: 'Daily check-in snapshot' },
+  { key: 'diet',     title: 'DIET',          subtitle: 'No alcohol, no cheat meals' },
+  { key: 'workout1', title: 'WORKOUT 1',      subtitle: '45 min — any location' },
+  { key: 'workout2', title: 'WORKOUT 2',      subtitle: '45 min — outdoors' },
+  { key: 'read',     title: 'READ 10 PAGES',  subtitle: 'Non-fiction only, no audiobooks' },
+  { key: 'photo',    title: 'PROGRESS PHOTO', subtitle: 'Daily check-in snapshot' },
 ];
 
 export default function Today() {
