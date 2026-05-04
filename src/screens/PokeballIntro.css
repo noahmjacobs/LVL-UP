@@ -1,0 +1,63 @@
+.pokeball-intro {
+  position: fixed;
+  inset: 0;
+  background: #0D0D0D;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  overflow: hidden;
+}
+
+/* ── Shared ball styles ───────────────────────────────── */
+.intro-ball {
+  position: absolute;
+  width: 96px;
+  height: 96px;
+  image-rendering: pixelated;
+  transform-origin: center center;
+}
+
+/* ── Pass-through balls (Ultra + Great) ─────────────────
+   Zoom from tiny → large → oversized & fade out,
+   spinning as they rush toward the camera             */
+@keyframes ball-pass {
+  0%   { transform: scale(0.05) rotate(0deg);    opacity: 0; }
+  8%   { opacity: 1; }
+  65%  { transform: scale(2.8) rotate(180deg);   opacity: 1; }
+  85%  { transform: scale(3.6) rotate(240deg);   opacity: 0; }
+  100% { transform: scale(4.2) rotate(270deg);   opacity: 0; }
+}
+
+.intro-ball--pass {
+  animation: ball-pass linear forwards;
+  /* duration set inline from JS so timing constants stay in one place */
+}
+
+/* ── Final Poké Ball ─────────────────────────────────────
+   Zooms in from far away to completely filling the screen,
+   spinning, never fades — white flash overlay takes over  */
+@keyframes ball-final {
+  0%   { transform: scale(0.05) rotate(0deg);    opacity: 0; }
+  8%   { opacity: 1; }
+  40%  { transform: scale(3)   rotate(200deg);   opacity: 1; }
+  100% { transform: scale(22)  rotate(380deg);   opacity: 1; }
+}
+
+.intro-ball--final {
+  animation: ball-final ease-in forwards;
+}
+
+/* ── White flash ─────────────────────────────────────── */
+@keyframes flash-in {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.intro-flash {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  animation: flash-in 350ms ease-in forwards;
+  pointer-events: none;
+}

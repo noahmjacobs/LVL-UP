@@ -195,8 +195,8 @@ const useGameStore = create((set, get) => ({
     set({ uid: firebaseUser.uid });
     const hasData = await get().loadSavedUser(firebaseUser.uid);
     if (!hasData) {
-      // New user — start onboarding
-      set({ authLoading: false, currentScreen: 'professor' });
+      // New user — play pokéball intro, then onboarding
+      set({ authLoading: false, currentScreen: 'pokeballIntro' });
     } else {
       set({ authLoading: false });
     }

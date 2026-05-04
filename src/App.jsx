@@ -4,6 +4,7 @@ import { auth, onAuthStateChanged } from './firebase';
 import { applyTheme } from './constants/themes';
 
 import TitleScreen      from './screens/TitleScreen';
+import PokeballIntro   from './screens/PokeballIntro';
 import ProfessorIntro   from './screens/ProfessorIntro';
 import NameEntry        from './screens/NameEntry';
 import StarterSelect    from './screens/StarterSelect';
@@ -46,8 +47,9 @@ export default function App() {
     <div className="app-shell">
       <div className="scanlines" />
 
-      {currentScreen === 'title'        && <TitleScreen />}
-      {currentScreen === 'professor'    && <ProfessorIntro />}
+      {currentScreen === 'title'          && <TitleScreen />}
+      {currentScreen === 'pokeballIntro' && <PokeballIntro />}
+      {currentScreen === 'professor'     && <ProfessorIntro />}
       {currentScreen === 'nameEntry'    && <NameEntry />}
       {currentScreen === 'starterSelect' && <StarterSelect />}
       {currentScreen === 'restart'           && <RestartScreen />}
@@ -57,7 +59,7 @@ export default function App() {
         </div>
       )}
 
-      {!inOnboarding && currentScreen !== 'restart' && currentScreen !== 'title' && currentScreen !== 'chooseNewPokemon' && (
+      {!inOnboarding && currentScreen !== 'restart' && currentScreen !== 'title' && currentScreen !== 'pokeballIntro' && currentScreen !== 'chooseNewPokemon' && (
         <>
           <div className={`screen${currentScreen === 'today' ? ' screen--immersive' : ''}`}>
             {currentScreen === 'today'   && <Today />}
