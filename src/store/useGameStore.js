@@ -72,7 +72,7 @@ const computeStatsForChoice = (history, choice) => {
   const stats = defaultStats();
   for (const h of history) {
     if (!h.tasks) continue;
-    if (!forms.has(h.partnerName)) continue;
+    if (h.partnerName && !forms.has(h.partnerName)) continue; // skip only if partnerName is set but wrong line; legacy entries (no partnerName) are always included
     if (h.tasks.diet === true)     stats.discipline  = Math.min(STAT_MAX, stats.discipline  + STAT_INCREMENT);
     if (h.tasks.read === true)     stats.focus       = Math.min(STAT_MAX, stats.focus       + STAT_INCREMENT);
     if (h.tasks.workout1 === true && h.tasks.workout2 === true)
